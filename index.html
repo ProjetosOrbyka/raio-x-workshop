@@ -315,7 +315,7 @@
 
     <div class="card exam" id="roleExam" hidden>
       <div class="exam-head">
-        <span class="exam-num mono">06</span>
+        <span class="exam-num mono">07</span>
         <div>
           <div class="exam-title" id="roleExamTitle">Específico da sua área</div>
           <div class="exam-desc">Só quem está nessa área costuma ter essa informação.</div>
@@ -326,7 +326,7 @@
 
     <div class="card exam" id="notaGeralExam">
       <div class="exam-head">
-        <span class="exam-num mono">07</span>
+        <span class="exam-num mono">08</span>
         <div>
           <div class="exam-title">Nota geral do workshop <span class="req">*</span></div>
           <div class="exam-desc">Sensação geral, considerando tudo — do início ao fim.</div>
@@ -340,7 +340,7 @@
 
     <div class="card exam">
       <div class="exam-head">
-        <span class="exam-num mono">08</span>
+        <span class="exam-num mono">09</span>
         <div>
           <div class="exam-title">O que devemos manter</div>
           <div class="exam-desc">O que funcionou bem e deve continuar igual no próximo workshop.</div>
@@ -351,7 +351,7 @@
 
     <div class="card exam">
       <div class="exam-head">
-        <span class="exam-num mono">09</span>
+        <span class="exam-num mono">10</span>
         <div>
           <div class="exam-title">O que devemos mudar para o próximo</div>
           <div class="exam-desc">Ajustes concretos para a próxima edição.</div>
@@ -362,7 +362,7 @@
 
     <div class="card exam">
       <div class="exam-head">
-        <span class="exam-num mono">10</span>
+        <span class="exam-num mono">11</span>
         <div>
           <div class="exam-title">O que não vale a pena testar de novo</div>
           <div class="exam-desc">Ideias que já foram tentadas e não funcionaram — pra não repetir o teste.</div>
@@ -457,11 +457,12 @@
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   var SECTIONS = [
-    { key:'planejamento', num:'01', title:'Planejamento & Preparação', desc:'Materiais, cronograma e comunicação prévia estavam prontos e claros?', ph:'Ex.: material chegou em cima da hora, cronograma mudou sem avisar o grupo...' },
-    { key:'abertura', num:'02', title:'Abertura & Engajamento inicial', desc:'O início gerou energia e alinhou as expectativas do grupo?', ph:'Ex.: a dinâmica de abertura não pegou, energia baixa no começo...' },
-    { key:'execucao', num:'03', title:'Execução & Estratégias aplicadas', desc:'As dinâmicas e o conteúdo aplicados funcionaram na prática?', ph:'Ex.: a atividade em grupo não funcionou bem com turma grande...' },
-    { key:'participacao', num:'04', title:'Participação & resultado percebido', desc:'O grupo participou de verdade e saiu com clareza dos próximos passos?', ph:'Ex.: grupo ficou disperso à tarde, poucas perguntas...' },
-    { key:'encerramento', num:'05', title:'Encerramento & fechamento', desc:'O fechamento consolidou aprendizados e combinados?', ph:'Ex.: faltou tempo pra fechar os combinados no final...' }
+    { key:'planejamento', num:'01', title:'Planejamento & Preparação', short:'Planejamento', desc:'Materiais, cronograma e comunicação prévia estavam prontos e claros?', ph:'Ex.: material chegou em cima da hora, cronograma mudou sem avisar o grupo...' },
+    { key:'aberturaLeads', num:'02', title:'Abertura — Energia dos leads', short:'Leads (abertura)', desc:'A abertura gerou energia nos leads e alinhou as expectativas deles sobre o workshop?', ph:'Ex.: leads participativos desde o início, perguntas já na abertura, clima de expectativa alta...' },
+    { key:'aberturaTime', num:'03', title:'Abertura — Energia do time', short:'Time (abertura)', desc:'A abertura gerou energia no time e alinhou as expectativas internas sobre a condução do workshop?', ph:'Ex.: time alinhado sobre os papéis antes de começar, clima bom nos bastidores, sem correria de última hora...' },
+    { key:'execucao', num:'04', title:'Execução & Estratégias aplicadas', short:'Execução', desc:'As dinâmicas e o conteúdo aplicados funcionaram na prática?', ph:'Ex.: a atividade em grupo não funcionou bem com turma grande...' },
+    { key:'participacao', num:'05', title:'Participação & resultado percebido', short:'Participação', desc:'O grupo participou de verdade e saiu com clareza dos próximos passos?', ph:'Ex.: grupo ficou disperso à tarde, poucas perguntas...' },
+    { key:'encerramento', num:'06', title:'Encerramento & fechamento', short:'Encerramento', desc:'O fechamento consolidou aprendizados e combinados?', ph:'Ex.: faltou tempo pra fechar os combinados no final...' }
   ];
   var AREA_LABEL = { projetos:'Projetos', estrategia:'Estratégia', comercial:'Comercial', especialista:'Especialista' };
 
@@ -773,26 +774,20 @@
       }
     });
     var selectedWorkshop = workshopsList.filter(function(w){ return w.id === fWorkshopSelect.value; })[0] || {};
+    var scoresPayload = {};
+    var commentsPayload = {};
+    SECTIONS.forEach(function(s){
+      scoresPayload[s.key] = scores[s.key];
+      commentsPayload[s.key] = document.getElementById('obs-' + s.key).value.trim();
+    });
     var payload = {
       respondentName: document.getElementById('f-name').value.trim(),
       area: area,
       roleAnswers: roleAnswers,
       workshopName: selectedWorkshop.name || '',
       workshopDate: selectedWorkshop.date || '',
-      scores: {
-        planejamento: scores.planejamento,
-        abertura: scores.abertura,
-        execucao: scores.execucao,
-        participacao: scores.participacao,
-        encerramento: scores.encerramento
-      },
-      comments: {
-        planejamento: document.getElementById('obs-planejamento').value.trim(),
-        abertura: document.getElementById('obs-abertura').value.trim(),
-        execucao: document.getElementById('obs-execucao').value.trim(),
-        participacao: document.getElementById('obs-participacao').value.trim(),
-        encerramento: document.getElementById('obs-encerramento').value.trim()
-      },
+      scores: scoresPayload,
+      comments: commentsPayload,
       notaGeral: notaGeral,
       notaGeralComment: document.getElementById('obs-notaGeral').value.trim(),
       manter: document.getElementById('f-manter').value.trim(),
@@ -948,7 +943,7 @@
       '<div class="card kpi"><div class="kpi-label">Workshops avaliados</div><div class="kpi-value">' + groups.length + '</div></div>' +
       '<div class="card kpi"><div class="kpi-label">Nota geral · mais recente</div><div class="kpi-value">' + fmt1(latest.avgNota) + '</div><div class="kpi-sub">' + deltaHtml + '</div></div>' +
       '<div class="card kpi"><div class="kpi-label">Respostas registradas</div><div class="kpi-value">' + totalResponses + '</div></div>' +
-      '<div class="card kpi"><div class="kpi-label">Ponto de atenção</div><div class="kpi-value" style="font-size:19px;line-height:1.2;">' + weakestSection.title.split(' & ')[0] + '</div><div class="kpi-sub"><span class="badge band-' + wBand + '">' + bandIcon(wBand) + ' ' + fmt1(weakestScore) + '</span></div></div>';
+      '<div class="card kpi"><div class="kpi-label">Ponto de atenção</div><div class="kpi-value" style="font-size:19px;line-height:1.2;">' + weakestSection.short + '</div><div class="kpi-sub"><span class="badge band-' + wBand + '">' + bandIcon(wBand) + ' ' + fmt1(weakestScore) + '</span></div></div>';
   }
 
   function renderLineChart(groups){
@@ -1034,7 +1029,7 @@
       var x1 = cx - barW - 2, x2 = cx + 2;
       bars += '<rect class="bar-s1 hit" data-label="' + esc(s.title) + '" data-v="' + fmt1(v1) + '" data-which="Workshop mais recente" x="' + x1 + '" y="' + y(v1) + '" width="' + barW + '" height="' + (innerH - (y(v1)-padT)) + '" rx="3"/>';
       bars += '<rect class="bar-s2 hit" data-label="' + esc(s.title) + '" data-v="' + fmt1(v2) + '" data-which="Média histórica" x="' + x2 + '" y="' + y(v2) + '" width="' + barW + '" height="' + (innerH - (y(v2)-padT)) + '" rx="3"/>';
-      var short = s.title.split(' & ')[0].split(' ').slice(0,1).join(' ');
+      var short = s.short;
       bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-30) + '" text-anchor="middle">' + esc(s.num) + '</text>';
       bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-14) + '" text-anchor="middle">' + esc(short) + '</text>';
     });
@@ -1083,7 +1078,7 @@
               if (!ans || ans.score == null) return '';
               var b3 = band(ans.score);
               return '<div class="obs-block">' +
-                '<div class="obs-head"><span class="obs-num mono">06</span>' +
+                '<div class="obs-head"><span class="obs-num mono">07</span>' +
                 '<span class="obs-title">' + esc(q.label) + '</span>' +
                 '<span class="badge band-' + b3 + '">' + bandIcon(b3) + ' ' + ans.score + '</span></div>' +
                 (ans.comment ? '<div class="obs-text">“' + esc(ans.comment) + '”</div>' : '') +
@@ -1091,14 +1086,14 @@
             }
             if (!ans) return '';
             return '<div class="obs-block">' +
-              '<div class="obs-head"><span class="obs-num mono">06</span>' +
+              '<div class="obs-head"><span class="obs-num mono">07</span>' +
               '<span class="obs-title">' + esc(q.label) + '</span></div>' +
               '<div class="obs-text">“' + esc(ans) + '”</div>' +
               '</div>';
           }).join('');
         }
         var notaBlock = '<div class="obs-block nota-geral">' +
-          '<div class="obs-head"><span class="obs-num mono">07</span>' +
+          '<div class="obs-head"><span class="obs-num mono">08</span>' +
           '<span class="obs-title">Nota geral</span>' +
           '<span class="badge band-' + band(r.notaGeral) + '">' + bandIcon(band(r.notaGeral)) + ' ' + r.notaGeral + '</span></div>' +
           (r.notaGeralComment ? '<div class="obs-text">“' + esc(r.notaGeralComment) + '”</div>' : '') +
