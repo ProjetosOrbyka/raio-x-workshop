@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raio-X do Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    color-scheme: light;
+    /* Orbyka · Sand (claros) */
+    --bg:#F1E3DA; --surface:#FBF5EF; --surface-2:#ECD9C9;
+    --ink:#2A192C; --ink-soft:rgba(42,25,44,0.66); --muted:rgba(42,25,44,0.46);
+    --line:#D9C4B1; --line-strong:#C6AF9F;
+    /* Orbyka · Sun (destaque) */
+    --accent:#CE6B4B; --accent-strong:#864334; --accent-soft:#F7E1D5;
+    --glow:#FBCB8C; --series-2:#6E6AAE;
+    --good-bg:#E4EEDD; --good-text:#3F6B31; --good-solid:#3F6B31;
+    --warn-bg:#FBEACB; --warn-text:#8A5D0A; --warn-solid:#8A5D0A;
+    --crit-bg:#F6DEDA; --crit-text:#A33B34; --crit-solid:#A33B34;
+    --shadow: 0 1px 2px rgba(42,25,44,0.06), 0 6px 20px -8px rgba(42,25,44,0.16);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      /* Orbyka · Space (cosmos) */
+      --bg:#1C111E; --surface:#2A192C; --surface-2:#412938;
+      --ink:#F1E3DA; --ink-soft:#C6AF9F; --muted:rgba(241,227,218,0.5);
+      --line:rgba(233,211,196,0.14); --line-strong:rgba(233,211,196,0.22);
+      --accent:#CE6B4B; --accent-strong:#FBCB8C; --accent-soft:rgba(206,107,75,0.20);
+      --glow:#FBCB8C; --series-2:#6E6AAE;
+      --good-bg:rgba(143,201,122,0.16); --good-text:#8FC97A;
+      --warn-bg:rgba(232,182,74,0.16); --warn-text:#E8B64A;
+      --crit-bg:rgba(230,124,124,0.20); --crit-text:#E67C7C;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -8px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#1C111E; --surface:#2A192C; --surface-2:#412938;
+    --ink:#F1E3DA; --ink-soft:#C6AF9F; --muted:rgba(241,227,218,0.5);
+    --line:rgba(233,211,196,0.14); --line-strong:rgba(233,211,196,0.22);
+    --accent:#CE6B4B; --accent-strong:#FBCB8C; --accent-soft:rgba(206,107,75,0.20);
+    --glow:#FBCB8C; --series-2:#6E6AAE;
+    --good-bg:rgba(143,201,122,0.16); --good-text:#8FC97A;
+    --warn-bg:rgba(232,182,74,0.16); --warn-text:#E8B64A;
+    --crit-bg:rgba(230,124,124,0.20); --crit-text:#E67C7C;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -8px rgba(0,0,0,0.5);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); font-family:"Plus Jakarta Sans", system-ui, sans-serif; }
+  h1,h2,h3{ font-family:"Plus Jakarta Sans", sans-serif; text-wrap:balance; margin:0; letter-spacing:0.01em; }
+  .mono{ font-family:"Plus Jakarta Sans", system-ui, sans-serif; }
+  a{ color:var(--accent); }
+  img{ max-width:100%; }
+
+  .wrap{ max-width:920px; margin:0 auto; padding:28px 20px 80px; }
+  @media (max-width:600px){ .wrap{ padding:20px 14px 64px; } }
+
+  /* ---------- header ---------- */
+  .hero{ margin-bottom:22px; }
+  .brand-logo{ margin-bottom:18px; }
+  .brand-logo svg{ height:26px; width:auto; display:block; }
+  .brand-logo .logo-dark{ display:none; }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .brand-logo .logo-light{ display:none; }
+    :root:not([data-theme="light"]) .brand-logo .logo-dark{ display:block; }
+  }
+  :root[data-theme="dark"] .brand-logo .logo-light{ display:none; }
+  :root[data-theme="dark"] .brand-logo .logo-dark{ display:block; }
+  .hero-top{ display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .eyebrow{ font-family:"Plus Jakarta Sans",sans-serif; font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent-strong); font-weight:700; }
+  h1.title{ font-size:clamp(30px,5vw,42px); font-weight:800; line-height:1.02; text-transform:uppercase; letter-spacing:0.005em; }
+  .subtitle{ color:var(--ink-soft); font-size:14.5px; margin-top:6px; max-width:56ch; line-height:1.5; }
+  .scanline{ height:2px; margin-top:16px; border-radius:2px; background:linear-gradient(90deg, var(--glow), var(--accent) 35%, transparent 70%); background-size:200% 100%; }
+  @media (prefers-reduced-motion:no-preference){ .scanline{ animation:scan 5s ease-in-out infinite; } }
+  @keyframes scan{ 0%{background-position:0% 0;} 50%{background-position:100% 0;} 100%{background-position:0% 0;} }
+
+  /* ---------- tabs ---------- */
+  .tabs{ display:flex; gap:6px; margin:22px 0 20px; border-bottom:1px solid var(--line); }
+  .tab-btn{ appearance:none; border:none; background:none; cursor:pointer; padding:10px 4px 12px; margin-right:18px;
+    font-family:"Plus Jakarta Sans",sans-serif; font-size:12.5px; letter-spacing:0.08em; text-transform:uppercase; font-weight:600;
+    color:var(--muted); position:relative; display:flex; align-items:center; gap:8px; }
+  .tab-btn .dot{ width:6px; height:6px; border-radius:50%; background:var(--muted); }
+  .tab-btn[aria-selected="true"]{ color:var(--ink); }
+  .tab-btn[aria-selected="true"] .dot{ background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .tab-btn[aria-selected="true"]::after{ content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--accent); border-radius:2px; }
+  .tab-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .panel[hidden]{ display:none !important; }
+
+  /* ---------- card / section ---------- */
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+  .exam{ padding:20px 22px; margin-bottom:14px; }
+  .exam-head{ display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; }
+  .exam-num{ font-family:"Plus Jakarta Sans",sans-serif; font-size:12px; color:var(--accent); font-weight:600; padding-top:3px; flex-shrink:0; }
+  .exam-title{ font-size:17px; font-weight:700; font-family:"Plus Jakarta Sans",sans-serif; }
+  .exam-desc{ color:var(--ink-soft); font-size:13.5px; margin-top:3px; line-height:1.45; }
+  .exam.has-error{ border-color:var(--crit-text); }
+  .role-q + .role-q{ margin-top:18px; padding-top:16px; border-top:1px dashed var(--line); }
+  .role-q.has-error{ box-shadow:inset 3px 0 0 var(--crit-text); padding-left:11px; margin-left:-11px; }
+
+  /* ---------- NPS rating ---------- */
+  .nps{ display:flex; gap:5px; flex-wrap:wrap; margin-top:12px; }
+  .nps button{ appearance:none; cursor:pointer; width:34px; height:34px; border-radius:8px; border:1px solid var(--line);
+    background:var(--surface-2); color:var(--ink-soft); font-family:"Plus Jakarta Sans",sans-serif; font-size:13px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; transition:transform .08s ease; }
+  .nps button:hover{ border-color:var(--accent); color:var(--ink); }
+  .nps button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .nps button.active{ color:#fff; border-color:transparent; transform:translateY(-1px); }
+  .nps button.active.band-crit{ background:var(--crit-solid); }
+  .nps button.active.band-warn{ background:var(--warn-solid); }
+  .nps button.active.band-good{ background:var(--good-solid); }
+  .nps-readout{ margin-top:8px; font-size:12.5px; font-family:"Plus Jakarta Sans",sans-serif; color:var(--muted); min-height:16px; }
+  .nps-readout .band-chip{ font-weight:600; }
+  .nps-readout .band-chip.band-crit{ color:var(--crit-text); }
+  .nps-readout .band-chip.band-warn{ color:var(--warn-text); }
+  .nps-readout .band-chip.band-good{ color:var(--good-text); }
+
+  .field{ margin-top:10px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:5px; }
+  .field input[type=text], .field input[type=email], .field input[type=password], .field input[type=date], .field select, .field textarea{
+    width:100%; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); color:var(--ink);
+    padding:9px 11px; font-size:14px; font-family:"Plus Jakarta Sans",sans-serif; }
+  .field textarea{ min-height:64px; resize:vertical; font-family:"Plus Jakarta Sans",sans-serif; line-height:1.5; }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+  .req{ color:var(--crit-text); }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:560px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .submit-row{ display:flex; align-items:center; gap:14px; margin-top:18px; flex-wrap:wrap; }
+  .btn-primary{ appearance:none; cursor:pointer; border:none; background:var(--accent); color:#fff; font-weight:600;
+    text-transform:uppercase; letter-spacing:0.04em; font-size:13.5px; padding:12px 22px; border-radius:9px; font-family:"Plus Jakarta Sans",sans-serif; }
+  .btn-primary:hover{ background:var(--accent-strong); }
+  .btn-primary:disabled{ opacity:0.6; cursor:default; }
+  .btn-secondary{ appearance:none; cursor:pointer; border:1px solid var(--line-strong); background:transparent; color:var(--ink);
+    font-weight:600; text-transform:uppercase; letter-spacing:0.04em; font-size:12.5px; padding:10px 16px; border-radius:9px; font-family:"Plus Jakarta Sans",sans-serif; }
+  .form-msg{ font-size:13px; font-family:"Plus Jakarta Sans",sans-serif; }
+  .form-msg.ok{ color:var(--good-text); }
+  .form-msg.err{ color:var(--crit-text); }
+
+  /* ---------- KPI ---------- */
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+  @media (max-width:760px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
+  .kpi{ padding:16px; }
+  .kpi-label{ font-family:"Plus Jakarta Sans",sans-serif; font-size:10.5px; letter-spacing:0.09em; text-transform:uppercase; color:var(--muted); }
+  .kpi-value{ font-family:"Plus Jakarta Sans",sans-serif; font-size:32px; font-weight:800; margin-top:4px; line-height:1; }
+  .kpi-sub{ margin-top:6px; font-size:12px; }
+  .badge{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:999px; font-family:"Plus Jakarta Sans",sans-serif; }
+  .badge.band-good{ background:var(--good-bg); color:var(--good-text); }
+  .badge.band-warn{ background:var(--warn-bg); color:var(--warn-text); }
+  .badge.band-crit{ background:var(--crit-bg); color:var(--crit-text); }
+
+  /* ---------- charts ---------- */
+  .chart-card{ padding:18px 20px 12px; margin-bottom:16px; }
+  .chart-title{ font-size:14.5px; font-weight:700; }
+  .chart-legend{ display:flex; gap:16px; margin:6px 0 4px; flex-wrap:wrap; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); }
+  .legend-swatch{ width:10px; height:10px; border-radius:3px; }
+  .chart-wrap{ position:relative; overflow-x:auto; }
+  .chart-wrap svg{ display:block; width:100%; height:auto; }
+  .cgrid{ stroke:var(--line); stroke-width:1; }
+  .caxis-text{ fill:var(--muted); font-family:"Plus Jakarta Sans",sans-serif; font-size:9.5px; }
+  .cline{ fill:none; stroke:var(--accent); stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
+  .carea{ fill:var(--accent); opacity:0.08; }
+  .cdot{ fill:var(--surface); stroke:var(--accent); stroke-width:2.5; }
+  .cdot.last{ fill:var(--accent); }
+  .clabel{ fill:var(--ink); font-family:"Plus Jakarta Sans",sans-serif; font-size:11px; font-weight:600; }
+  .bar-s1{ fill:var(--accent); }
+  .bar-s2{ fill:var(--series-2); }
+  .hit{ fill:transparent; cursor:pointer; }
+  .tooltip{ position:absolute; pointer-events:none; background:var(--ink); color:var(--bg); font-family:"Plus Jakarta Sans",sans-serif;
+    font-size:11.5px; padding:7px 10px; border-radius:7px; line-height:1.5; transform:translate(-50%,-115%); white-space:nowrap;
+    opacity:0; transition:opacity .1s ease; z-index:5; box-shadow:var(--shadow); }
+  .tooltip.show{ opacity:1; }
+  .empty-hist{ text-align:center; padding:56px 20px; color:var(--ink-soft); }
+  .empty-hist .mono{ font-size:12px; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase; }
+  .empty-hist p{ max-width:40ch; margin:10px auto 18px; line-height:1.5; }
+
+  /* ---------- workshop list ---------- */
+  .ws-item{ border:1px solid var(--line); border-radius:12px; margin-bottom:10px; overflow:hidden; background:var(--surface); }
+  .ws-item summary{ list-style:none; cursor:pointer; padding:14px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .ws-item summary::-webkit-details-marker{ display:none; }
+  .ws-item summary .chev{ margin-left:auto; color:var(--muted); font-size:12px; transition:transform .15s ease; }
+  .ws-item[open] summary .chev{ transform:rotate(90deg); }
+  .ws-date{ font-family:"Plus Jakarta Sans",sans-serif; font-size:12px; color:var(--muted); min-width:78px; }
+  .ws-name{ font-weight:700; font-size:14.5px; }
+  .ws-count{ font-size:12px; color:var(--ink-soft); font-family:"Plus Jakarta Sans",sans-serif; }
+  .ws-body{ padding:0 16px 16px; border-top:1px solid var(--line); }
+  .resp-row{ padding:12px 0; border-bottom:1px dashed var(--line); }
+  .resp-row:last-child{ border-bottom:none; }
+  .resp-head{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  .resp-name{ font-weight:600; font-size:13.5px; }
+  .area-tag{ font-size:10.5px; font-family:"Plus Jakarta Sans",sans-serif; text-transform:uppercase; letter-spacing:0.06em;
+    background:var(--surface-2); color:var(--ink-soft); padding:2px 7px; border-radius:5px; }
+  .obs-block{ padding:6px 0; }
+  .obs-head{ display:flex; align-items:center; gap:8px; }
+  .obs-num{ font-size:10.5px; color:var(--accent); font-weight:600; width:16px; flex-shrink:0; }
+  .obs-title{ font-size:12.5px; font-weight:600; color:var(--ink-soft); flex:1; }
+  .obs-text{ font-size:12.5px; color:var(--ink-soft); margin:4px 0 0 24px; line-height:1.5; font-style:italic; }
+  .obs-block.nota-geral{ border-top:1px solid var(--line); margin-top:2px; padding-top:10px; }
+  .obs-block.nota-geral .obs-title{ color:var(--ink); font-weight:700; }
+  .note{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
+  .note b{ color:var(--ink); font-weight:600; }
+  .two-col{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:14px; }
+  @media (max-width:760px){ .two-col{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:480px){ .two-col{ grid-template-columns:1fr; } }
+  .col-title{ font-family:"Plus Jakarta Sans",sans-serif; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .col-list{ display:flex; flex-direction:column; gap:8px; }
+  .col-list .item{ font-size:12.5px; line-height:1.5; padding:9px 10px; background:var(--surface-2); border-radius:8px; }
+  .col-list .item span.who{ font-family:"Plus Jakarta Sans",sans-serif; font-size:10px; color:var(--muted); display:block; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.05em; }
+  .footer-note{ margin-top:30px; font-size:12px; color:var(--muted); text-align:center; }
+  .hist-toolbar{ display:flex; justify-content:flex-end; gap:10px; margin:-4px 0 16px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="brand-logo" aria-label="Orbyka">
+      <svg class="logo-light" width="150" height="38" viewBox="0 0 285 72" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+        <path d="M99.0805 19.4912C108.176 19.4912 115.979 26.8032 115.979 35.7142C115.979 44.6252 108.176 51.9372 99.0805 51.9372C89.9848 51.9372 82.2427 44.7491 82.2427 35.7142C82.2427 26.6793 90.1087 19.4912 99.0805 19.4912V19.4912ZM99.0805 45.483C104.363 45.483 108.358 41.1818 108.358 35.7142C108.358 30.2466 104.363 25.9454 99.0805 25.9454C93.7975 25.9454 89.8633 30.2466 89.8633 35.7142C89.8633 41.1818 93.8559 45.483 99.0805 45.483Z" fill="#2B1A2D"/>
+        <path d="M129.862 25.9279C129.862 26.0859 130.085 26.1175 130.129 25.9668C131.487 21.4542 135.259 19.4932 138.343 19.4932C139.388 19.4932 140.002 19.6778 140.923 19.9233V27.3592C139.754 26.9291 138.343 26.7444 137.358 26.7444C134.593 26.7444 129.986 28.2802 129.986 36.885V51.266H122.426V20.1663H129.862V25.9279V25.9279Z" fill="#2B1A2D"/>
+        <path d="M164.147 51.9371C159.768 51.9371 156.016 50.1146 153.769 46.9604C153.691 46.851 153.516 46.9093 153.516 47.043V51.2616H145.956V6.83301H153.516V24.3415C153.516 24.48 153.691 24.5359 153.774 24.4266C156.296 21.0998 160.045 19.4936 164.087 19.4936C173.612 19.4936 179.389 26.8056 179.389 35.5926C179.389 44.3797 173.367 51.9371 164.15 51.9371H164.147ZM162.796 25.8214C157.205 25.8214 153.394 29.9379 153.394 35.962C153.394 41.9861 157.45 45.6093 162.612 45.6093C168.264 45.6093 171.768 41.1842 171.768 35.6558C171.768 30.1274 168.512 25.8238 162.796 25.8238V25.8214Z" fill="#2B1A2D"/>
+        <path d="M284.877 20.3558V51.0716C284.877 51.1761 284.792 51.2612 284.687 51.2612H277.509C277.405 51.2612 277.319 51.1761 277.319 51.0716V47.1957C277.319 47.0134 277.086 46.9357 276.979 47.0839C274.722 50.1628 271.011 51.9367 266.688 51.9367C257.471 51.9367 251.449 44.6879 251.449 35.5922C251.449 26.4966 257.225 19.4932 266.751 19.4932C270.746 19.4932 274.462 21.0678 276.982 24.3217C277.091 24.465 277.319 24.3848 277.319 24.205V20.3583C277.319 20.2538 277.405 20.1687 277.509 20.1687H284.687C284.792 20.1687 284.877 20.2538 284.877 20.3583V20.3558ZM268.224 45.6065C273.388 45.6065 277.504 42.1048 277.504 35.9592C277.504 29.8136 273.633 25.8186 268.042 25.8186C262.45 25.8186 259.07 30.3044 259.07 35.6505C259.07 40.9967 262.572 45.604 268.226 45.604L268.224 45.6065Z" fill="#2B1A2D"/>
+        <path d="M206.365 20.1665L198.251 41.4853L189.775 20.1665H181.218L182.297 22.5382L192.965 46.1461C193.621 47.5847 193.838 49.1472 193.651 50.683L193.6 50.9115C191.923 56.2017 187.189 59.3486 181.807 57.5649L181.741 57.5479L179.794 63.4213C180.268 63.6498 180.759 63.8466 181.284 64.0264C183.738 64.8453 186.127 65.0252 188.368 64.6655C192.8 64.0118 196.516 61.2124 199.036 57.1713C200.688 54.5225 214.841 20.1641 214.841 20.1641H206.365V20.1665Z" fill="#2B1A2D"/>
+        <path d="M237.661 20.5338H246.222L246.997 20.5241L235.141 35.1432L239.926 42.5719C241.564 44.9631 242.57 46.0955 244.9 46.0955C245.593 46.0955 247.42 45.9059 248.679 44.9631L251.449 50.3165C248.803 52.8972 245.406 53.0843 243.829 53.0843C238.981 53.0843 236.274 50.4404 234.07 47.2935L227.951 37.4518C227.863 37.3133 227.649 37.374 227.649 37.5368V52.3917H219.905V6.87207H227.649V33.6925L237.661 20.5338V20.5338Z" fill="#2B1A2D"/>
+        <path d="M28.8157 28.816C24.9641 32.6676 24.9787 38.9541 28.8522 42.8276C32.7257 46.7011 39.0098 46.7181 42.8638 42.8641C46.7155 39.0125 46.7009 32.7259 42.8274 28.8524C38.9563 24.9814 32.6698 24.9644 28.8157 28.8184V28.816ZM40.2127 40.2129C37.8215 42.6041 33.914 42.5871 31.5009 40.1765C29.0879 37.7659 29.0733 33.8583 31.4645 31.4647C33.8557 29.0736 37.7632 29.0906 40.1738 31.5012C42.5868 33.9118 42.6014 37.8193 40.2102 40.2129H40.2127Z" fill="#CF6B4B"/>
+        <path d="M41.2183 22.9855L43.8694 25.6367L51.7963 17.7099C54.4815 15.0247 54.4815 10.6555 51.7963 7.96783C50.5715 6.74309 50.5715 4.75288 51.7963 3.52813L52.6322 2.6922L49.981 0.0410156L49.1451 0.876952C46.4599 3.56215 46.4599 7.93138 49.1451 10.6166C50.3698 11.8413 50.3698 13.834 49.1451 15.0587L41.2183 22.9855Z" fill="#CF6B4B"/>
+        <path d="M48.7347 30.5021L56.6615 22.5752C57.8862 21.3505 59.8789 21.3505 61.1036 22.5752C63.7888 25.2604 68.1581 25.2604 70.8433 22.5752L71.6792 21.7393L69.0304 19.0881L68.1945 19.9241C66.9698 21.1488 64.9771 21.1488 63.7548 19.9241C61.0696 17.2389 56.698 17.2389 54.0128 19.9241L46.0859 27.8509L48.7371 30.5021H48.7347Z" fill="#CF6B4B"/>
+        <path d="M37.8262 11.7373H34.0791V21.7637H37.8262V11.7373Z" fill="#CF6B4B"/>
+        <path d="M61.0597 49.1456C59.8349 50.3703 57.8423 50.3703 56.6175 49.1456L48.6907 41.2188L46.0396 43.8699L53.9664 51.7967C56.6516 54.4819 61.0232 54.4819 63.706 51.7967C64.9307 50.572 66.9234 50.572 68.1457 51.7967L68.9816 52.6327L71.6328 49.9839L70.7969 49.1456C68.1117 46.4604 63.7424 46.4604 61.0572 49.1456H61.0597Z" fill="#CF6B4B"/>
+        <path d="M51.7528 54.0098L43.826 46.083L41.1748 48.7342L49.1016 56.661C50.3264 57.8857 50.3264 59.8784 49.1016 61.1031C46.4164 63.7883 46.4164 68.1576 49.1016 70.8428L49.9376 71.6787L52.5887 69.0275L51.7528 68.1916C50.5281 66.9668 50.5281 64.9766 51.7528 63.7519C54.438 61.0667 54.438 56.6975 51.7528 54.0123V54.0098Z" fill="#CF6B4B"/>
+        <path d="M59.9419 34.0762H49.9131V37.8233H59.9419V34.0762Z" fill="#CF6B4B"/>
+        <path d="M30.4606 48.6912L27.8094 46.04L19.8826 53.9669C17.1974 56.6521 17.1974 61.0213 19.8826 63.7065C21.1073 64.9312 21.1073 66.9239 19.8826 68.1486L19.0466 68.9846L21.6978 71.6357L22.5337 70.7998C25.2189 68.1146 25.2189 63.7454 22.5337 61.0577C21.309 59.833 21.309 57.8428 22.5337 56.618L30.4606 48.6912V48.6912Z" fill="#CF6B4B"/>
+        <path d="M22.9445 41.1748L15.0177 49.1016C13.793 50.3264 11.8027 50.3264 10.578 49.1016C7.89279 46.4164 3.52357 46.4164 0.838366 49.1016L0 49.9376L2.65118 52.5887L3.48955 51.7504C4.71429 50.5256 6.7045 50.5256 7.92925 51.7504C10.6144 54.4356 14.9837 54.4356 17.6689 51.7504L25.5957 43.8236L22.9445 41.1748Z" fill="#CF6B4B"/>
+        <path d="M37.6002 49.9131H33.853V59.9395H37.6002V49.9131Z" fill="#CF6B4B"/>
+        <path d="M10.619 22.5313C11.8438 21.3066 13.834 21.3066 15.0587 22.5313L22.9855 30.4581L25.6367 27.8069L17.7099 19.8801C15.0247 17.1949 10.6555 17.1949 7.97026 19.8801C6.74552 21.1049 4.75288 21.1049 3.53056 19.8801L2.69463 19.0442L0.0410156 21.6954L0.876952 22.5313C3.56215 25.2165 7.93138 25.2165 10.6166 22.5313H10.619Z" fill="#CF6B4B"/>
+        <path d="M19.9265 17.6664L27.8533 25.5933L30.5045 22.9421L22.5777 15.0153C21.3529 13.7905 21.3529 11.8003 22.5777 10.5756C25.2629 7.89036 25.2629 3.52114 22.5777 0.835936L21.7417 0L19.0906 2.65118L19.9265 3.48712C21.1512 4.71186 21.1512 6.7045 19.9265 7.92682C17.2413 10.612 17.2413 14.9837 19.9265 17.6664V17.6664Z" fill="#CF6B4B"/>
+        <path d="M21.7637 33.8535H11.7373V37.6006H21.7637V33.8535Z" fill="#CF6B4B"/>
+      </svg>
+      <svg class="logo-dark" width="150" height="38" viewBox="0 0 285 72" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+        <path d="M99.0805 19.4912C108.176 19.4912 115.979 26.8032 115.979 35.7142C115.979 44.6252 108.176 51.9372 99.0805 51.9372C89.9848 51.9372 82.2427 44.7491 82.2427 35.7142C82.2427 26.6793 90.1087 19.4912 99.0805 19.4912V19.4912ZM99.0805 45.483C104.363 45.483 108.358 41.1818 108.358 35.7142C108.358 30.2466 104.363 25.9454 99.0805 25.9454C93.7975 25.9454 89.8633 30.2466 89.8633 35.7142C89.8633 41.1818 93.8559 45.483 99.0805 45.483Z" fill="#E9D3C4"/>
+        <path d="M129.862 25.9279C129.862 26.0859 130.085 26.1175 130.129 25.9668C131.487 21.4542 135.259 19.4932 138.343 19.4932C139.388 19.4932 140.002 19.6778 140.923 19.9233V27.3592C139.754 26.9291 138.343 26.7444 137.358 26.7444C134.593 26.7444 129.986 28.2802 129.986 36.885V51.266H122.426V20.1663H129.862V25.9279V25.9279Z" fill="#E9D3C4"/>
+        <path d="M164.147 51.9371C159.768 51.9371 156.016 50.1146 153.769 46.9604C153.691 46.851 153.516 46.9093 153.516 47.043V51.2616H145.956V6.83301H153.516V24.3415C153.516 24.48 153.691 24.5359 153.774 24.4266C156.296 21.0998 160.045 19.4936 164.087 19.4936C173.612 19.4936 179.389 26.8056 179.389 35.5926C179.389 44.3797 173.367 51.9371 164.15 51.9371H164.147ZM162.796 25.8214C157.205 25.8214 153.394 29.9379 153.394 35.962C153.394 41.9861 157.45 45.6093 162.612 45.6093C168.264 45.6093 171.768 41.1842 171.768 35.6558C171.768 30.1274 168.512 25.8238 162.796 25.8238V25.8214Z" fill="#E9D3C4"/>
+        <path d="M284.877 20.3558V51.0716C284.877 51.1761 284.792 51.2612 284.687 51.2612H277.509C277.405 51.2612 277.319 51.1761 277.319 51.0716V47.1957C277.319 47.0134 277.086 46.9357 276.979 47.0839C274.722 50.1628 271.011 51.9367 266.688 51.9367C257.471 51.9367 251.449 44.6879 251.449 35.5922C251.449 26.4966 257.225 19.4932 266.751 19.4932C270.746 19.4932 274.462 21.0678 276.982 24.3217C277.091 24.465 277.319 24.3848 277.319 24.205V20.3583C277.319 20.2538 277.405 20.1687 277.509 20.1687H284.687C284.792 20.1687 284.877 20.2538 284.877 20.3583V20.3558ZM268.224 45.6065C273.388 45.6065 277.504 42.1048 277.504 35.9592C277.504 29.8136 273.633 25.8186 268.042 25.8186C262.45 25.8186 259.07 30.3044 259.07 35.6505C259.07 40.9967 262.572 45.604 268.226 45.604L268.224 45.6065Z" fill="#E9D3C4"/>
+        <path d="M206.365 20.1665L198.251 41.4853L189.775 20.1665H181.218L182.297 22.5382L192.965 46.1461C193.621 47.5847 193.838 49.1472 193.651 50.683L193.6 50.9115C191.923 56.2017 187.189 59.3486 181.807 57.5649L181.741 57.5479L179.794 63.4213C180.268 63.6498 180.759 63.8466 181.284 64.0264C183.738 64.8453 186.127 65.0252 188.368 64.6655C192.8 64.0118 196.516 61.2124 199.036 57.1713C200.688 54.5225 214.841 20.1641 214.841 20.1641H206.365V20.1665Z" fill="#E9D3C4"/>
+        <path d="M237.661 20.5338H246.222L246.997 20.5241L235.141 35.1432L239.926 42.5719C241.564 44.9631 242.57 46.0955 244.9 46.0955C245.593 46.0955 247.42 45.9059 248.679 44.9631L251.449 50.3165C248.803 52.8972 245.406 53.0843 243.829 53.0843C238.981 53.0843 236.274 50.4404 234.07 47.2935L227.951 37.4518C227.863 37.3133 227.649 37.374 227.649 37.5368V52.3917H219.905V6.87207H227.649V33.6925L237.661 20.5338V20.5338Z" fill="#E9D3C4"/>
+        <path d="M28.8157 28.816C24.9641 32.6676 24.9787 38.9541 28.8522 42.8276C32.7257 46.7011 39.0098 46.7181 42.8638 42.8641C46.7155 39.0125 46.7009 32.7259 42.8274 28.8524C38.9563 24.9814 32.6698 24.9644 28.8157 28.8184V28.816ZM40.2127 40.2129C37.8215 42.6041 33.914 42.5871 31.5009 40.1765C29.0879 37.7659 29.0733 33.8583 31.4645 31.4647C33.8557 29.0736 37.7632 29.0906 40.1738 31.5012C42.5868 33.9118 42.6014 37.8193 40.2102 40.2129H40.2127Z" fill="#CF6B4B"/>
+        <path d="M41.2183 22.9855L43.8694 25.6367L51.7963 17.7099C54.4815 15.0247 54.4815 10.6555 51.7963 7.96783C50.5715 6.74309 50.5715 4.75288 51.7963 3.52813L52.6322 2.6922L49.981 0.0410156L49.1451 0.876952C46.4599 3.56215 46.4599 7.93138 49.1451 10.6166C50.3698 11.8413 50.3698 13.834 49.1451 15.0587L41.2183 22.9855Z" fill="#CF6B4B"/>
+        <path d="M48.7347 30.5021L56.6615 22.5752C57.8862 21.3505 59.8789 21.3505 61.1036 22.5752C63.7888 25.2604 68.1581 25.2604 70.8433 22.5752L71.6792 21.7393L69.0304 19.0881L68.1945 19.9241C66.9698 21.1488 64.9771 21.1488 63.7548 19.9241C61.0696 17.2389 56.698 17.2389 54.0128 19.9241L46.0859 27.8509L48.7371 30.5021H48.7347Z" fill="#CF6B4B"/>
+        <path d="M37.8262 11.7373H34.0791V21.7637H37.8262V11.7373Z" fill="#CF6B4B"/>
+        <path d="M61.0597 49.1456C59.8349 50.3703 57.8423 50.3703 56.6175 49.1456L48.6907 41.2188L46.0396 43.8699L53.9664 51.7967C56.6516 54.4819 61.0232 54.4819 63.706 51.7967C64.9307 50.572 66.9234 50.572 68.1457 51.7967L68.9816 52.6327L71.6328 49.9839L70.7969 49.1456C68.1117 46.4604 63.7424 46.4604 61.0572 49.1456H61.0597Z" fill="#CF6B4B"/>
+        <path d="M51.7528 54.0098L43.826 46.083L41.1748 48.7342L49.1016 56.661C50.3264 57.8857 50.3264 59.8784 49.1016 61.1031C46.4164 63.7883 46.4164 68.1576 49.1016 70.8428L49.9376 71.6787L52.5887 69.0275L51.7528 68.1916C50.5281 66.9668 50.5281 64.9766 51.7528 63.7519C54.438 61.0667 54.438 56.6975 51.7528 54.0123V54.0098Z" fill="#CF6B4B"/>
+        <path d="M59.9419 34.0762H49.9131V37.8233H59.9419V34.0762Z" fill="#CF6B4B"/>
+        <path d="M30.4606 48.6912L27.8094 46.04L19.8826 53.9669C17.1974 56.6521 17.1974 61.0213 19.8826 63.7065C21.1073 64.9312 21.1073 66.9239 19.8826 68.1486L19.0466 68.9846L21.6978 71.6357L22.5337 70.7998C25.2189 68.1146 25.2189 63.7454 22.5337 61.0577C21.309 59.833 21.309 57.8428 22.5337 56.618L30.4606 48.6912V48.6912Z" fill="#CF6B4B"/>
+        <path d="M22.9445 41.1748L15.0177 49.1016C13.793 50.3264 11.8027 50.3264 10.578 49.1016C7.89279 46.4164 3.52357 46.4164 0.838366 49.1016L0 49.9376L2.65118 52.5887L3.48955 51.7504C4.71429 50.5256 6.7045 50.5256 7.92925 51.7504C10.6144 54.4356 14.9837 54.4356 17.6689 51.7504L25.5957 43.8236L22.9445 41.1748Z" fill="#CF6B4B"/>
+        <path d="M37.6002 49.9131H33.853V59.9395H37.6002V49.9131Z" fill="#CF6B4B"/>
+        <path d="M10.619 22.5313C11.8438 21.3066 13.834 21.3066 15.0587 22.5313L22.9855 30.4581L25.6367 27.8069L17.7099 19.8801C15.0247 17.1949 10.6555 17.1949 7.97026 19.8801C6.74552 21.1049 4.75288 21.1049 3.53056 19.8801L2.69463 19.0442L0.0410156 21.6954L0.876952 22.5313C3.56215 25.2165 7.93138 25.2165 10.6166 22.5313H10.619Z" fill="#CF6B4B"/>
+        <path d="M19.9265 17.6664L27.8533 25.5933L30.5045 22.9421L22.5777 15.0153C21.3529 13.7905 21.3529 11.8003 22.5777 10.5756C25.2629 7.89036 25.2629 3.52114 22.5777 0.835936L21.7417 0L19.0906 2.65118L19.9265 3.48712C21.1512 4.71186 21.1512 6.7045 19.9265 7.92682C17.2413 10.612 17.2413 14.9837 19.9265 17.6664V17.6664Z" fill="#CF6B4B"/>
+        <path d="M21.7637 33.8535H11.7373V37.6006H21.7637V33.8535Z" fill="#CF6B4B"/>
+      </svg>
+    </div>
+    <div class="hero-top">
+      <span class="eyebrow">Pós-Workshop</span>
+    </div>
+    <h1 class="title">Raio-X do Workshop</h1>
+    <p class="subtitle">Do briefing ao encerramento: registre como cada etapa funcionou e acompanhe a evolução entre edições para saber onde ajustar na próxima.</p>
+    <div class="scanline"></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn" id="tabFormBtn" role="tab" aria-selected="true" aria-controls="panelForm"><span class="dot"></span>Novo registro</button>
+    <button class="tab-btn" id="tabHistBtn" role="tab" aria-selected="false" aria-controls="panelHist"><span class="dot"></span>Histórico</button>
+  </nav>
+
+  <section id="panelForm" class="panel" role="tabpanel">
+    <div class="card exam">
+      <div class="exam-head">
+        <span class="exam-num mono">ID</span>
+        <div>
+          <div class="exam-title">Identificação</div>
+          <div class="exam-desc">Quem está avaliando e qual workshop está sendo revisado.</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-name">Seu nome <span class="req">*</span></label>
+          <input type="text" id="f-name" autocomplete="name" placeholder="Ex.: Camila Souza">
+        </div>
+        <div class="field">
+          <label for="f-area">Sua área <span class="req">*</span></label>
+          <select id="f-area">
+            <option value="">Selecione</option>
+            <option value="projetos">Projetos</option>
+            <option value="estrategia">Estratégia</option>
+            <option value="comercial">Comercial</option>
+            <option value="especialista">Especialista</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f-wsname">Workshop / edição <span class="req">*</span></label>
+          <input type="text" id="f-wsname" list="wsNames" placeholder="Ex.: CAMP Presencial — Turma 3">
+          <datalist id="wsNames"></datalist>
+        </div>
+        <div class="field">
+          <label for="f-wsdate">Data do workshop <span class="req">*</span></label>
+          <input type="date" id="f-wsdate">
+        </div>
+      </div>
+    </div>
+
+    <div id="sectionsHost"></div>
+
+    <div class="card exam" id="roleExam" hidden>
+      <div class="exam-head">
+        <span class="exam-num mono">06</span>
+        <div>
+          <div class="exam-title" id="roleExamTitle">Específico da sua área</div>
+          <div class="exam-desc">Só quem está nessa área costuma ter essa informação.</div>
+        </div>
+      </div>
+      <div id="roleExamBody"></div>
+    </div>
+
+    <div class="card exam" id="notaGeralExam">
+      <div class="exam-head">
+        <span class="exam-num mono">07</span>
+        <div>
+          <div class="exam-title">Nota geral do workshop <span class="req">*</span></div>
+          <div class="exam-desc">Sensação geral, considerando tudo — do início ao fim.</div>
+        </div>
+      </div>
+      <div class="nps" data-key="notaGeral" id="nps-notaGeral"></div>
+      <div class="nps-readout" id="readout-notaGeral">Ainda não avaliado.</div>
+      <div class="field"><label for="obs-notaGeral">Observação (opcional)</label>
+        <textarea id="obs-notaGeral" placeholder="Comentário geral sobre o workshop como um todo..."></textarea></div>
+    </div>
+
+    <div class="card exam">
+      <div class="exam-head">
+        <span class="exam-num mono">08</span>
+        <div>
+          <div class="exam-title">O que devemos manter</div>
+          <div class="exam-desc">O que funcionou bem e deve continuar igual no próximo workshop.</div>
+        </div>
+      </div>
+      <div class="field"><textarea id="f-manter" placeholder="Ex.: a dinâmica de abertura engajou bem o grupo..."></textarea></div>
+    </div>
+
+    <div class="card exam">
+      <div class="exam-head">
+        <span class="exam-num mono">09</span>
+        <div>
+          <div class="exam-title">O que devemos mudar para o próximo</div>
+          <div class="exam-desc">Ajustes concretos para a próxima edição.</div>
+        </div>
+      </div>
+      <div class="field"><textarea id="f-mudar" placeholder="Ex.: reduzir o tempo da etapa X, revisar o material Y..."></textarea></div>
+    </div>
+
+    <div class="card exam">
+      <div class="exam-head">
+        <span class="exam-num mono">10</span>
+        <div>
+          <div class="exam-title">O que não vale a pena testar de novo</div>
+          <div class="exam-desc">Ideias que já foram tentadas e não funcionaram — pra não repetir o teste.</div>
+        </div>
+      </div>
+      <div class="field"><textarea id="f-naotestar" placeholder="Ex.: oferta relâmpago no 2º dia não converteu, não vale repetir..."></textarea></div>
+    </div>
+
+    <div class="submit-row">
+      <button class="btn-primary" id="submitBtn">Registrar avaliação</button>
+      <span class="form-msg" id="formMsg"></span>
+    </div>
+  </section>
+
+  <section id="panelHist" class="panel" role="tabpanel" hidden>
+    <div id="histLogin" class="card exam">
+      <div class="exam-head">
+        <div>
+          <div class="exam-title">Área restrita</div>
+          <div class="exam-desc">Só quem tem o login administrador acessa o histórico e os gráficos.</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label for="hist-email">E-mail</label><input type="email" id="hist-email" autocomplete="username"></div>
+        <div class="field"><label for="hist-pass">Senha</label><input type="password" id="hist-pass" autocomplete="current-password"></div>
+      </div>
+      <div class="submit-row">
+        <button class="btn-primary" id="histLoginBtn">Entrar</button>
+        <span class="form-msg" id="histLoginMsg"></span>
+      </div>
+    </div>
+
+    <div id="histEmpty" class="card empty-hist" hidden>
+      <div class="mono">Nenhum registro ainda</div>
+      <p>Assim que o time registrar a primeira avaliação de um workshop, o histórico e os gráficos de evolução aparecem aqui.</p>
+      <button class="btn-secondary" id="goToFormBtn">Registrar primeira avaliação</button>
+    </div>
+
+    <div id="histContent" hidden>
+      <div class="hist-toolbar">
+        <button class="btn-secondary" id="histRefreshBtn">Atualizar</button>
+        <button class="btn-secondary" id="histLogoutBtn">Sair</button>
+      </div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+
+      <div class="card chart-card">
+        <div class="chart-title">Evolução da nota geral</div>
+        <div class="chart-wrap" id="lineChartWrap"></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="chart-title">Etapas do workshop mais recente vs. média histórica</div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Workshop mais recente</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--series-2)"></span>Média histórica</span>
+        </div>
+        <div class="chart-wrap" id="barChartWrap"></div>
+      </div>
+
+      <h3 style="font-size:16px;margin:22px 0 10px;">Workshops avaliados</h3>
+      <div id="wsList"></div>
+    </div>
+  </section>
+
+  <p class="footer-note">Qualquer pessoa do time pode responder — só o login administrador vê o histórico.</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SUPABASE_URL = "https://enzlxatyymkhauwrsuhe.supabase.co";
+  var SUPABASE_ANON_KEY = "sb_publishable_UlJddAAnKnNkY34Mp93_Hg_T4xDrwKt";
+  var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  var SECTIONS = [
+    { key:'planejamento', num:'01', title:'Planejamento & Preparação', desc:'Materiais, cronograma e comunicação prévia estavam prontos e claros?', ph:'Ex.: material chegou em cima da hora, cronograma mudou sem avisar o grupo...' },
+    { key:'abertura', num:'02', title:'Abertura & Engajamento inicial', desc:'O início gerou energia e alinhou as expectativas do grupo?', ph:'Ex.: a dinâmica de abertura não pegou, energia baixa no começo...' },
+    { key:'execucao', num:'03', title:'Execução & Estratégias aplicadas', desc:'As dinâmicas e o conteúdo aplicados funcionaram na prática?', ph:'Ex.: a atividade em grupo não funcionou bem com turma grande...' },
+    { key:'participacao', num:'04', title:'Participação & resultado percebido', desc:'O grupo participou de verdade e saiu com clareza dos próximos passos?', ph:'Ex.: grupo ficou disperso à tarde, poucas perguntas...' },
+    { key:'encerramento', num:'05', title:'Encerramento & fechamento', desc:'O fechamento consolidou aprendizados e combinados?', ph:'Ex.: faltou tempo pra fechar os combinados no final...' }
+  ];
+  var AREA_LABEL = { projetos:'Projetos', estrategia:'Estratégia', comercial:'Comercial', especialista:'Especialista' };
+
+  var ROLE_QUESTIONS = {
+    comercial: [
+      { key:'periodoVendas', type:'text', label:'Qual foi o maior período de vendas?', ph:'Ex.: pico nas 48h após a abertura do carrinho, no e-mail de última chamada...' }
+    ],
+    projetos: [
+      { key:'quemCompareceu', type:'text', label:'No dia do evento, quem mais compareceu?', ph:'Ex.: maioria de convidados, poucos especialistas presentes...' }
+    ],
+    estrategia: [
+      { key:'acoesComparecimento', type:'text', label:'Quais ações de comparecimento foram feitas?', ph:'Ex.: lembrete no grupo do WhatsApp, e-mail 1h antes, ligação pros inscritos...' },
+      { key:'acoesResultado', type:'text', label:'Quais dessas ações deram mais resultado?', ph:'Ex.: o lembrete por WhatsApp trouxe mais gente que o e-mail...' },
+      { key:'videoPerformou', type:'text', label:'Qual vídeo performou mais?', ph:'Ex.: o vídeo de abertura teve mais retenção e comentários...' }
+    ],
+    especialista: [
+      { key:'entregaConteudoPitch', type:'rating', label:'Como você avalia sua entrega de conteúdo e do pitch?', desc:'Clareza, ritmo e conexão com a audiência na hora de apresentar.', ph:'Ex.: o pitch final ficou corrido, faltou tempo pra chamada de ação...' }
+    ]
+  };
+  var roleScores = {};
+  var roleTexts = {};
+
+  function band(score){
+    if (score == null) return '';
+    if (score >= 8) return 'good';
+    if (score >= 6) return 'warn';
+    return 'crit';
+  }
+  function bandLabel(b){ return b==='good' ? 'Bom' : b==='warn' ? 'Atenção' : 'Crítico'; }
+  function bandIcon(b){ return b==='good' ? '●' : b==='warn' ? '▲' : '✕'; }
+  function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  /* ---------------- form state ---------------- */
+  var scores = {};
+  SECTIONS.forEach(function(s){ scores[s.key] = null; });
+  var notaGeral = null;
+
+  var sectionsHost = document.getElementById('sectionsHost');
+  SECTIONS.forEach(function(s){
+    var card = document.createElement('div');
+    card.className = 'card exam';
+    card.id = 'exam-' + s.key;
+    card.innerHTML =
+      '<div class="exam-head">' +
+        '<span class="exam-num mono">' + s.num + '</span>' +
+        '<div><div class="exam-title">' + s.title + ' <span class="req">*</span></div>' +
+          '<div class="exam-desc">' + s.desc + '</div></div>' +
+      '</div>' +
+      '<div class="nps" data-key="' + s.key + '" id="nps-' + s.key + '"></div>' +
+      '<div class="nps-readout" id="readout-' + s.key + '">Ainda não avaliado.</div>' +
+      '<div class="field"><label for="obs-' + s.key + '">Observação (opcional)</label>' +
+        '<textarea id="obs-' + s.key + '" placeholder="' + esc(s.ph) + '"></textarea></div>';
+    sectionsHost.appendChild(card);
+  });
+
+  function buildNps(containerId, key, onPick){
+    var el = document.getElementById(containerId);
+    for (var i = 0; i <= 10; i++){
+      (function(i){
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = i;
+        b.setAttribute('aria-label', 'Nota ' + i);
+        b.addEventListener('click', function(){ onPick(i); });
+        el.appendChild(b);
+      })(i);
+    }
+  }
+
+  function paintNps(containerId, value){
+    var el = document.getElementById(containerId);
+    var b = band(value);
+    Array.prototype.forEach.call(el.children, function(btn, i){
+      btn.classList.toggle('active', i === value);
+      btn.classList.remove('band-good','band-warn','band-crit');
+      if (i === value && b) btn.classList.add('band-' + b);
+    });
+  }
+
+  function paintReadout(readoutId, value){
+    var el = document.getElementById(readoutId);
+    if (value == null){ el.textContent = 'Ainda não avaliado.'; return; }
+    var b = band(value);
+    el.innerHTML = 'Nota ' + value + '/10 · <span class="band-chip band-' + b + '">' + bandIcon(b) + ' ' + bandLabel(b) + '</span>';
+  }
+
+  SECTIONS.forEach(function(s){
+    buildNps('nps-' + s.key, s.key, function(v){
+      scores[s.key] = v;
+      paintNps('nps-' + s.key, v);
+      paintReadout('readout-' + s.key, v);
+      document.getElementById('exam-' + s.key).classList.remove('has-error');
+    });
+  });
+  buildNps('nps-notaGeral', 'notaGeral', function(v){
+    notaGeral = v;
+    paintNps('nps-notaGeral', v);
+    paintReadout('readout-notaGeral', v);
+    document.getElementById('notaGeralExam').classList.remove('has-error');
+  });
+
+  /* ---------------- role-specific section ---------------- */
+  var roleExam = document.getElementById('roleExam');
+  var roleExamTitle = document.getElementById('roleExamTitle');
+  var roleExamBody = document.getElementById('roleExamBody');
+
+  function renderRoleSection(area){
+    roleScores = {};
+    roleTexts = {};
+    var qs = ROLE_QUESTIONS[area] || [];
+    if (!qs.length){ roleExam.hidden = true; roleExamBody.innerHTML = ''; return; }
+    roleExam.hidden = false;
+    roleExam.classList.remove('has-error');
+    roleExamTitle.textContent = 'Específico da área: ' + (AREA_LABEL[area] || area);
+    roleExamBody.innerHTML = qs.map(function(q){
+      if (q.type === 'rating'){
+        roleScores[q.key] = null;
+        return '<div class="role-q" id="roleq-' + q.key + '">' +
+          '<label style="display:block;font-size:13.5px;font-weight:600;margin-bottom:2px;">' + esc(q.label) + ' <span class="req">*</span></label>' +
+          (q.desc ? '<div class="exam-desc" style="margin-bottom:8px;">' + esc(q.desc) + '</div>' : '') +
+          '<div class="nps" id="nps-role-' + q.key + '"></div>' +
+          '<div class="nps-readout" id="readout-role-' + q.key + '">Ainda não avaliado.</div>' +
+          '<div class="field"><textarea id="obs-role-' + q.key + '" placeholder="' + esc(q.ph) + '"></textarea></div>' +
+          '</div>';
+      }
+      roleTexts[q.key] = '';
+      return '<div class="field" style="margin-top:16px;">' +
+        '<label for="roletext-' + q.key + '">' + esc(q.label) + '</label>' +
+        '<textarea id="roletext-' + q.key + '" placeholder="' + esc(q.ph) + '"></textarea>' +
+        '</div>';
+    }).join('');
+    qs.forEach(function(q){
+      if (q.type !== 'rating') return;
+      buildNps('nps-role-' + q.key, q.key, function(v){
+        roleScores[q.key] = v;
+        paintNps('nps-role-' + q.key, v);
+        paintReadout('readout-role-' + q.key, v);
+        document.getElementById('roleq-' + q.key).classList.remove('has-error');
+      });
+    });
+  }
+
+  document.getElementById('f-area').addEventListener('change', function(){
+    renderRoleSection(this.value);
+  });
+
+  /* ---------------- tabs ---------------- */
+  var tabFormBtn = document.getElementById('tabFormBtn');
+  var tabHistBtn = document.getElementById('tabHistBtn');
+  var panelForm = document.getElementById('panelForm');
+  var panelHist = document.getElementById('panelHist');
+
+  function showTab(name){
+    var isForm = name === 'form';
+    panelForm.hidden = !isForm;
+    panelHist.hidden = isForm;
+    tabFormBtn.setAttribute('aria-selected', String(isForm));
+    tabHistBtn.setAttribute('aria-selected', String(!isForm));
+  }
+  tabFormBtn.addEventListener('click', function(){ showTab('form'); });
+  tabHistBtn.addEventListener('click', function(){ showTab('hist'); ensureHistView(); });
+  document.getElementById('goToFormBtn').addEventListener('click', function(){ showTab('form'); });
+
+  /* ---------------- submit ---------------- */
+  var formMsg = document.getElementById('formMsg');
+  var submitBtn = document.getElementById('submitBtn');
+
+  function todayISO(){
+    var d = new Date();
+    var mm = String(d.getMonth()+1).padStart(2,'0');
+    var dd = String(d.getDate()).padStart(2,'0');
+    return d.getFullYear() + '-' + mm + '-' + dd;
+  }
+  document.getElementById('f-wsdate').value = todayISO();
+
+  function resetForm(keepWorkshop){
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-area').value = '';
+    if (!keepWorkshop){
+      document.getElementById('f-wsname').value = '';
+      document.getElementById('f-wsdate').value = todayISO();
+    }
+    document.getElementById('f-manter').value = '';
+    document.getElementById('f-mudar').value = '';
+    document.getElementById('f-naotestar').value = '';
+    renderRoleSection('');
+    SECTIONS.forEach(function(s){
+      scores[s.key] = null;
+      paintNps('nps-' + s.key, null);
+      paintReadout('readout-' + s.key, null);
+      document.getElementById('exam-' + s.key).classList.remove('has-error');
+      document.getElementById('obs-' + s.key).value = '';
+    });
+    notaGeral = null;
+    paintNps('nps-notaGeral', null);
+    paintReadout('readout-notaGeral', null);
+    document.getElementById('notaGeralExam').classList.remove('has-error');
+    document.getElementById('obs-notaGeral').value = '';
+  }
+
+  function validate(){
+    var ok = true;
+    var name = document.getElementById('f-name').value.trim();
+    var area = document.getElementById('f-area').value;
+    var wsname = document.getElementById('f-wsname').value.trim();
+    var wsdate = document.getElementById('f-wsdate').value;
+    [['f-name',name],['f-area',area],['f-wsname',wsname],['f-wsdate',wsdate]].forEach(function(pair){
+      document.getElementById(pair[0]).style.borderColor = pair[1] ? '' : 'var(--crit-text)';
+      if (!pair[1]) ok = false;
+    });
+    SECTIONS.forEach(function(s){
+      var missing = scores[s.key] == null;
+      document.getElementById('exam-' + s.key).classList.toggle('has-error', missing);
+      if (missing) ok = false;
+    });
+    document.getElementById('notaGeralExam').classList.toggle('has-error', notaGeral == null);
+    if (notaGeral == null) ok = false;
+
+    var qs = ROLE_QUESTIONS[area] || [];
+    qs.forEach(function(q){
+      if (q.type !== 'rating') return;
+      var missing = roleScores[q.key] == null;
+      var el = document.getElementById('roleq-' + q.key);
+      if (el) el.classList.toggle('has-error', missing);
+      if (missing) ok = false;
+    });
+    return ok;
+  }
+
+  function toRow(payload){
+    return {
+      respondent_name: payload.respondentName,
+      area: payload.area,
+      workshop_name: payload.workshopName,
+      workshop_date: payload.workshopDate,
+      scores: payload.scores,
+      comments: payload.comments,
+      nota_geral: payload.notaGeral,
+      nota_geral_comment: payload.notaGeralComment,
+      role_answers: payload.roleAnswers,
+      manter: payload.manter,
+      mudar: payload.mudar,
+      nao_testar: payload.naoTestar
+    };
+  }
+
+  function fromRow(row){
+    return {
+      respondentName: row.respondent_name,
+      area: row.area,
+      workshopName: row.workshop_name,
+      workshopDate: row.workshop_date,
+      scores: row.scores || {},
+      comments: row.comments || {},
+      notaGeral: row.nota_geral,
+      notaGeralComment: row.nota_geral_comment,
+      roleAnswers: row.role_answers || {},
+      manter: row.manter,
+      mudar: row.mudar,
+      naoTestar: row.nao_testar,
+      createdAt: row.created_at
+    };
+  }
+
+  submitBtn.addEventListener('click', function(){
+    formMsg.textContent = '';
+    formMsg.className = 'form-msg';
+    if (!validate()){
+      formMsg.textContent = 'Preencha os campos destacados antes de enviar.';
+      formMsg.classList.add('err');
+      return;
+    }
+    submitBtn.disabled = true;
+    formMsg.textContent = 'Enviando...';
+    var area = document.getElementById('f-area').value;
+    var roleAnswers = {};
+    (ROLE_QUESTIONS[area] || []).forEach(function(q){
+      if (q.type === 'rating'){
+        roleAnswers[q.key] = {
+          score: roleScores[q.key],
+          comment: (document.getElementById('obs-role-' + q.key) || {}).value
+        };
+        if (roleAnswers[q.key].comment) roleAnswers[q.key].comment = roleAnswers[q.key].comment.trim();
+      } else {
+        var el = document.getElementById('roletext-' + q.key);
+        roleAnswers[q.key] = el ? el.value.trim() : '';
+      }
+    });
+    var payload = {
+      respondentName: document.getElementById('f-name').value.trim(),
+      area: area,
+      roleAnswers: roleAnswers,
+      workshopName: document.getElementById('f-wsname').value.trim(),
+      workshopDate: document.getElementById('f-wsdate').value,
+      scores: {
+        planejamento: scores.planejamento,
+        abertura: scores.abertura,
+        execucao: scores.execucao,
+        participacao: scores.participacao,
+        encerramento: scores.encerramento
+      },
+      comments: {
+        planejamento: document.getElementById('obs-planejamento').value.trim(),
+        abertura: document.getElementById('obs-abertura').value.trim(),
+        execucao: document.getElementById('obs-execucao').value.trim(),
+        participacao: document.getElementById('obs-participacao').value.trim(),
+        encerramento: document.getElementById('obs-encerramento').value.trim()
+      },
+      notaGeral: notaGeral,
+      notaGeralComment: document.getElementById('obs-notaGeral').value.trim(),
+      manter: document.getElementById('f-manter').value.trim(),
+      mudar: document.getElementById('f-mudar').value.trim(),
+      naoTestar: document.getElementById('f-naotestar').value.trim()
+    };
+    sb.from('responses').insert([toRow(payload)]).then(function(res){
+      submitBtn.disabled = false;
+      if (res.error){
+        formMsg.textContent = 'Não deu pra salvar (' + res.error.message + '). Tente de novo.';
+        formMsg.classList.add('err');
+        return;
+      }
+      formMsg.textContent = 'Avaliação registrada. Obrigado!';
+      formMsg.classList.add('ok');
+      resetForm(true);
+    });
+  });
+
+  /* ---------------- history / dashboard (login-gated) ---------------- */
+  var allResponses = [];
+  var wsNamesDatalist = document.getElementById('wsNames');
+  var histSession = null;
+
+  var histLogin = document.getElementById('histLogin');
+  var histEmpty = document.getElementById('histEmpty');
+  var histContent = document.getElementById('histContent');
+  var histLoginBtn = document.getElementById('histLoginBtn');
+  var histLoginMsg = document.getElementById('histLoginMsg');
+  var histRefreshBtn = document.getElementById('histRefreshBtn');
+  var histLogoutBtn = document.getElementById('histLogoutBtn');
+
+  function showLoginGate(){
+    histLogin.hidden = false;
+    histEmpty.hidden = true;
+    histContent.hidden = true;
+  }
+
+  histLoginBtn.addEventListener('click', function(){
+    var email = document.getElementById('hist-email').value.trim();
+    var pass = document.getElementById('hist-pass').value;
+    histLoginMsg.textContent = 'Entrando...';
+    histLoginMsg.className = 'form-msg';
+    histLoginBtn.disabled = true;
+    sb.auth.signInWithPassword({ email: email, password: pass }).then(function(res){
+      histLoginBtn.disabled = false;
+      if (res.error){
+        histLoginMsg.textContent = 'E-mail ou senha inválidos.';
+        histLoginMsg.classList.add('err');
+        return;
+      }
+      histSession = res.data.session;
+      histLoginMsg.textContent = '';
+      histLogin.hidden = true;
+      loadHistory();
+    });
+  });
+
+  histRefreshBtn.addEventListener('click', function(){ loadHistory(); });
+  histLogoutBtn.addEventListener('click', function(){
+    sb.auth.signOut().then(function(){
+      histSession = null;
+      allResponses = [];
+      showLoginGate();
+    });
+  });
+
+  function ensureHistView(){
+    sb.auth.getSession().then(function(res){
+      histSession = res.data.session;
+      if (!histSession){
+        showLoginGate();
+      } else {
+        histLogin.hidden = true;
+        loadHistory();
+      }
+    });
+  }
+
+  function groupByWorkshop(list){
+    var map = {};
+    var order = [];
+    list.forEach(function(r){
+      var key = (r.workshopName||'') + '|' + (r.workshopDate||'');
+      if (!map[key]){ map[key] = { key:key, name:r.workshopName, date:r.workshopDate, responses:[] }; order.push(key); }
+      map[key].responses.push(r);
+    });
+    var groups = order.map(function(k){ return map[k]; });
+    groups.forEach(function(g){
+      var sums = {}; SECTIONS.forEach(function(s){ sums[s.key] = 0; });
+      var notaSum = 0;
+      g.responses.forEach(function(r){
+        SECTIONS.forEach(function(s){ sums[s.key] += (r.scores && r.scores[s.key]) || 0; });
+        notaSum += r.notaGeral || 0;
+      });
+      var n = g.responses.length || 1;
+      g.avgScores = {}; SECTIONS.forEach(function(s){ g.avgScores[s.key] = sums[s.key] / n; });
+      g.avgNota = notaSum / n;
+    });
+    groups.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
+    return groups;
+  }
+
+  function renderKpis(groups, totalResponses){
+    var latest = groups[groups.length - 1];
+    var prev = groups[groups.length - 2];
+    var grid = document.getElementById('kpiGrid');
+    var deltaHtml = '';
+    if (prev){
+      var diff = latest.avgNota - prev.avgNota;
+      var arrow = diff > 0.05 ? '▲' : diff < -0.05 ? '▼' : '→';
+      var deltaBand = diff > 0.05 ? 'good' : diff < -0.05 ? 'crit' : 'warn';
+      deltaHtml = '<span class="badge band-' + deltaBand + '">' + arrow + ' ' + (diff>=0?'+':'') + fmt1(diff) + ' vs. anterior</span>';
+    } else {
+      deltaHtml = '<span class="kpi-sub" style="color:var(--muted)">primeiro registro</span>';
+    }
+    var weakestKey = SECTIONS.reduce(function(acc,s){
+      return (acc==null || latest.avgScores[s.key] < latest.avgScores[acc]) ? s.key : acc;
+    }, null);
+    var weakestSection = SECTIONS.filter(function(s){ return s.key === weakestKey; })[0];
+    var weakestScore = latest.avgScores[weakestKey];
+    var wBand = band(weakestScore);
+
+    grid.innerHTML =
+      '<div class="card kpi"><div class="kpi-label">Workshops avaliados</div><div class="kpi-value">' + groups.length + '</div></div>' +
+      '<div class="card kpi"><div class="kpi-label">Nota geral · mais recente</div><div class="kpi-value">' + fmt1(latest.avgNota) + '</div><div class="kpi-sub">' + deltaHtml + '</div></div>' +
+      '<div class="card kpi"><div class="kpi-label">Respostas registradas</div><div class="kpi-value">' + totalResponses + '</div></div>' +
+      '<div class="card kpi"><div class="kpi-label">Ponto de atenção</div><div class="kpi-value" style="font-size:19px;line-height:1.2;">' + weakestSection.title.split(' & ')[0] + '</div><div class="kpi-sub"><span class="badge band-' + wBand + '">' + bandIcon(wBand) + ' ' + fmt1(weakestScore) + '</span></div></div>';
+  }
+
+  function renderLineChart(groups){
+    var wrap = document.getElementById('lineChartWrap');
+    var W = 640, H = 220, padL = 30, padR = 14, padT = 16, padB = 30;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+    var n = groups.length;
+    var x = function(i){ return n <= 1 ? padL + innerW/2 : padL + (innerW * i) / (n - 1); };
+    var y = function(v){ return padT + innerH - (innerH * v) / 10; };
+
+    var gridLines = [0,5,10].map(function(v){
+      return '<line class="cgrid" x1="' + padL + '" x2="' + (W-padR) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>' +
+             '<text class="caxis-text" x="4" y="' + (y(v)+3) + '">' + v + '</text>';
+    }).join('');
+
+    var pathPts = groups.map(function(g,i){ return x(i) + ',' + y(g.avgNota); }).join(' ');
+    var areaPts = 'M' + x(0) + ',' + y(0) + ' L' + groups.map(function(g,i){ return x(i) + ',' + y(g.avgNota); }).join(' L') + ' L' + x(n-1) + ',' + y(0) + ' Z';
+
+    var dots = groups.map(function(g,i){
+      var isLast = i === n-1;
+      var label = i===0 || isLast ? '<text class="clabel" x="' + x(i) + '" y="' + (y(g.avgNota) - 10) + '" text-anchor="middle">' + fmt1(g.avgNota) + '</text>' : '';
+      return '<circle class="cdot' + (isLast?' last':'') + '" cx="' + x(i) + '" cy="' + y(g.avgNota) + '" r="4.5"/>' + label +
+        '<rect class="hit" data-idx="' + i + '" x="' + (x(i)-16) + '" y="' + padT + '" width="32" height="' + innerH + '"/>';
+    }).join('');
+
+    var xLabels = groups.map(function(g,i){
+      if (n > 8 && i % Math.ceil(n/8) !== 0 && i !== n-1) return '';
+      var short = (g.name||'').length > 14 ? g.name.slice(0,13) + '…' : g.name;
+      return '<text class="caxis-text" x="' + x(i) + '" y="' + (H-8) + '" text-anchor="middle">' + esc(short) + '</text>';
+    }).join('');
+
+    wrap.innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Evolução da nota geral por workshop">' +
+      '<path class="carea" d="' + areaPts + '"/>' +
+      gridLines +
+      '<polyline class="cline" points="' + pathPts + '"/>' +
+      dots + xLabels +
+      '</svg><div class="tooltip" id="lineTooltip"></div>';
+
+    var svg = wrap.querySelector('svg');
+    var tip = document.getElementById('lineTooltip');
+    Array.prototype.forEach.call(svg.querySelectorAll('.hit'), function(hit){
+      hit.addEventListener('pointerenter', function(e){
+        var i = +hit.getAttribute('data-idx');
+        var g = groups[i];
+        tip.innerHTML = '<b>' + esc(g.name) + '</b><br>' + esc(g.date) + ' · nota ' + fmt1(g.avgNota) + '/10';
+        tip.classList.add('show');
+      });
+      hit.addEventListener('pointermove', function(e){
+        var rect = wrap.getBoundingClientRect();
+        tip.style.left = (e.clientX - rect.left) + 'px';
+        tip.style.top = (e.clientY - rect.top) + 'px';
+      });
+      hit.addEventListener('pointerleave', function(){ tip.classList.remove('show'); });
+    });
+  }
+
+  function renderBarChart(groups){
+    var wrap = document.getElementById('barChartWrap');
+    var latest = groups[groups.length - 1];
+    var histAvg = {};
+    SECTIONS.forEach(function(s){
+      var sum = 0;
+      groups.forEach(function(g){ sum += g.avgScores[s.key]; });
+      histAvg[s.key] = sum / groups.length;
+    });
+
+    var W = 640, H = 240, padL = 28, padR = 10, padT = 14, padB = 46;
+    var innerW = W - padL - padR, innerH = H - padT - padB;
+    var groupW = innerW / SECTIONS.length;
+    var barW = Math.min(26, groupW * 0.28);
+    var y = function(v){ return padT + innerH - (innerH * v) / 10; };
+
+    var gridLines = [0,5,10].map(function(v){
+      return '<line class="cgrid" x1="' + padL + '" x2="' + (W-padR) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>' +
+             '<text class="caxis-text" x="2" y="' + (y(v)+3) + '">' + v + '</text>';
+    }).join('');
+
+    var bars = '';
+    SECTIONS.forEach(function(s, i){
+      var cx = padL + groupW * i + groupW/2;
+      var v1 = latest.avgScores[s.key], v2 = histAvg[s.key];
+      var x1 = cx - barW - 2, x2 = cx + 2;
+      bars += '<rect class="bar-s1 hit" data-label="' + esc(s.title) + '" data-v="' + fmt1(v1) + '" data-which="Workshop mais recente" x="' + x1 + '" y="' + y(v1) + '" width="' + barW + '" height="' + (innerH - (y(v1)-padT)) + '" rx="3"/>';
+      bars += '<rect class="bar-s2 hit" data-label="' + esc(s.title) + '" data-v="' + fmt1(v2) + '" data-which="Média histórica" x="' + x2 + '" y="' + y(v2) + '" width="' + barW + '" height="' + (innerH - (y(v2)-padT)) + '" rx="3"/>';
+      var short = s.title.split(' & ')[0].split(' ').slice(0,1).join(' ');
+      bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-30) + '" text-anchor="middle">' + esc(s.num) + '</text>';
+      bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-14) + '" text-anchor="middle">' + esc(short) + '</text>';
+    });
+
+    wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Comparação por etapa">' + gridLines + bars + '</svg><div class="tooltip" id="barTooltip"></div>';
+
+    var svg = wrap.querySelector('svg');
+    var tip = document.getElementById('barTooltip');
+    Array.prototype.forEach.call(svg.querySelectorAll('.hit'), function(bar){
+      bar.addEventListener('pointerenter', function(){
+        tip.innerHTML = '<b>' + bar.getAttribute('data-label') + '</b><br>' + bar.getAttribute('data-which') + ': ' + bar.getAttribute('data-v') + '/10';
+        tip.classList.add('show');
+      });
+      bar.addEventListener('pointermove', function(e){
+        var rect = wrap.getBoundingClientRect();
+        tip.style.left = (e.clientX - rect.left) + 'px';
+        tip.style.top = (e.clientY - rect.top) + 'px';
+      });
+      bar.addEventListener('pointerleave', function(){ tip.classList.remove('show'); });
+    });
+  }
+
+  function renderWsList(groups){
+    var host = document.getElementById('wsList');
+    var sorted = groups.slice().reverse();
+    host.innerHTML = sorted.map(function(g){
+      var b = band(g.avgNota);
+      var respRows = g.responses.map(function(r){
+        var obsBlocks = SECTIONS.map(function(s){
+          var score = r.scores && r.scores[s.key];
+          var comment = r.comments && r.comments[s.key];
+          var b2 = band(score);
+          return '<div class="obs-block">' +
+            '<div class="obs-head"><span class="obs-num mono">' + s.num + '</span>' +
+            '<span class="obs-title">' + esc(s.title) + '</span>' +
+            '<span class="badge band-' + b2 + '">' + bandIcon(b2) + ' ' + (score != null ? score : '—') + '</span></div>' +
+            (comment ? '<div class="obs-text">“' + esc(comment) + '”</div>' : '') +
+            '</div>';
+        }).join('');
+        var roleBlock = '';
+        var roleQs = ROLE_QUESTIONS[r.area] || [];
+        if (roleQs.length && r.roleAnswers){
+          roleBlock = roleQs.map(function(q){
+            var ans = r.roleAnswers[q.key];
+            if (q.type === 'rating'){
+              if (!ans || ans.score == null) return '';
+              var b3 = band(ans.score);
+              return '<div class="obs-block">' +
+                '<div class="obs-head"><span class="obs-num mono">06</span>' +
+                '<span class="obs-title">' + esc(q.label) + '</span>' +
+                '<span class="badge band-' + b3 + '">' + bandIcon(b3) + ' ' + ans.score + '</span></div>' +
+                (ans.comment ? '<div class="obs-text">“' + esc(ans.comment) + '”</div>' : '') +
+                '</div>';
+            }
+            if (!ans) return '';
+            return '<div class="obs-block">' +
+              '<div class="obs-head"><span class="obs-num mono">06</span>' +
+              '<span class="obs-title">' + esc(q.label) + '</span></div>' +
+              '<div class="obs-text">“' + esc(ans) + '”</div>' +
+              '</div>';
+          }).join('');
+        }
+        var notaBlock = '<div class="obs-block nota-geral">' +
+          '<div class="obs-head"><span class="obs-num mono">07</span>' +
+          '<span class="obs-title">Nota geral</span>' +
+          '<span class="badge band-' + band(r.notaGeral) + '">' + bandIcon(band(r.notaGeral)) + ' ' + r.notaGeral + '</span></div>' +
+          (r.notaGeralComment ? '<div class="obs-text">“' + esc(r.notaGeralComment) + '”</div>' : '') +
+          '</div>';
+        var notes = '';
+        if (r.manter) notes += '<div class="note"><b>Manter:</b> ' + esc(r.manter) + '</div>';
+        if (r.mudar) notes += '<div class="note"><b>Mudar:</b> ' + esc(r.mudar) + '</div>';
+        if (r.naoTestar) notes += '<div class="note"><b>Não testar de novo:</b> ' + esc(r.naoTestar) + '</div>';
+        return '<div class="resp-row">' +
+          '<div class="resp-head"><span class="resp-name">' + esc(r.respondentName) + '</span>' +
+          '<span class="area-tag">' + esc(AREA_LABEL[r.area] || r.area) + '</span></div>' +
+          obsBlocks + roleBlock + notaBlock + notes +
+          '</div>';
+      }).join('');
+
+      function listCol(field){
+        return g.responses.filter(function(r){ return r[field]; }).map(function(r){
+          return '<div class="item"><span class="who">' + esc(r.respondentName) + ' · ' + esc(AREA_LABEL[r.area]||r.area) + '</span>' + esc(r[field]) + '</div>';
+        }).join('') || '<div class="item" style="color:var(--muted)">Sem comentários.</div>';
+      }
+
+      return '<details class="ws-item">' +
+        '<summary>' +
+          '<span class="ws-date mono">' + esc(g.date) + '</span>' +
+          '<span class="ws-name">' + esc(g.name) + '</span>' +
+          '<span class="ws-count">' + g.responses.length + ' resposta' + (g.responses.length===1?'':'s') + '</span>' +
+          '<span class="badge band-' + b + '">' + bandIcon(b) + ' ' + fmt1(g.avgNota) + '</span>' +
+          '<span class="chev">▸</span>' +
+        '</summary>' +
+        '<div class="ws-body">' + respRows +
+          '<div class="two-col">' +
+            '<div><div class="col-title">O que manter</div><div class="col-list">' + listCol('manter') + '</div></div>' +
+            '<div><div class="col-title">O que mudar</div><div class="col-list">' + listCol('mudar') + '</div></div>' +
+            '<div><div class="col-title">Não vale testar de novo</div><div class="col-list">' + listCol('naoTestar') + '</div></div>' +
+          '</div>' +
+        '</div></details>';
+    }).join('');
+  }
+
+  function renderHistory(){
+    if (!allResponses.length){
+      histEmpty.hidden = false;
+      histContent.hidden = true;
+      return;
+    }
+    histEmpty.hidden = true;
+    histContent.hidden = false;
+    var groups = groupByWorkshop(allResponses);
+    renderKpis(groups, allResponses.length);
+    renderLineChart(groups);
+    renderBarChart(groups);
+    renderWsList(groups);
+
+    var names = {};
+    allResponses.forEach(function(r){ if (r.workshopName) names[r.workshopName] = true; });
+    wsNamesDatalist.innerHTML = Object.keys(names).map(function(n){ return '<option value="' + esc(n) + '">'; }).join('');
+  }
+
+  function loadHistory(){
+    histLogin.hidden = true;
+    sb.from('responses').select('*').order('created_at', { ascending: true }).then(function(res){
+      if (res.error){
+        histContent.hidden = true;
+        histEmpty.hidden = false;
+        histEmpty.querySelector('.mono').textContent = 'Erro ao carregar';
+        histEmpty.querySelector('p').textContent = res.error.message;
+        return;
+      }
+      allResponses = (res.data || []).map(fromRow);
+      renderHistory();
+    });
+  }
+})();
+</script>
+</body>
+</html>
