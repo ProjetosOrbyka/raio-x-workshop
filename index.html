@@ -303,16 +303,11 @@
           </select>
         </div>
       </div>
-      <div class="grid-2">
-        <div class="field">
-          <label for="f-wsname">Workshop / edição <span class="req">*</span></label>
-          <input type="text" id="f-wsname" list="wsNames" placeholder="Ex.: CAMP Presencial — Turma 3">
-          <datalist id="wsNames"></datalist>
-        </div>
-        <div class="field">
-          <label for="f-wsdate">Data do workshop <span class="req">*</span></label>
-          <input type="date" id="f-wsdate">
-        </div>
+      <div class="field">
+        <label for="f-workshop">Workshop / edição <span class="req">*</span></label>
+        <select id="f-workshop">
+          <option value="">Carregando...</option>
+        </select>
       </div>
     </div>
 
@@ -411,6 +406,24 @@
         <button class="btn-secondary" id="histRefreshBtn">Atualizar</button>
         <button class="btn-secondary" id="histLogoutBtn">Sair</button>
       </div>
+
+      <div class="card exam">
+        <div class="exam-head">
+          <div>
+            <div class="exam-title">Cadastrar novo workshop</div>
+            <div class="exam-desc">Cadastre aqui antes de mandar o link pro time responder sobre uma nova edição — assim todo mundo escolhe da mesma lista.</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="adm-wsname">Nome do workshop</label><input type="text" id="adm-wsname" placeholder="Ex.: WSF2F8"></div>
+          <div class="field"><label for="adm-wsdate">Data</label><input type="date" id="adm-wsdate"></div>
+        </div>
+        <div class="submit-row">
+          <button class="btn-primary" id="admAddWsBtn">Cadastrar</button>
+          <span class="form-msg" id="admAddWsMsg"></span>
+        </div>
+      </div>
+
       <div class="kpi-grid" id="kpiGrid"></div>
 
       <div class="card chart-card">
@@ -623,14 +636,36 @@
     var dd = String(d.getDate()).padStart(2,'0');
     return d.getFullYear() + '-' + mm + '-' + dd;
   }
-  document.getElementById('f-wsdate').value = todayISO();
+
+  /* ---------------- workshops list (shared, admin-managed) ---------------- */
+  var workshopsList = [];
+  var fWorkshopSelect = document.getElementById('f-workshop');
+
+  function loadWorkshops(){
+    return sb.from('workshops').select('*').order('date', { ascending: false }).then(function(res){
+      workshopsList = res.data || [];
+      var current = fWorkshopSelect.value;
+      if (!workshopsList.length){
+        fWorkshopSelect.innerHTML = '<option value="">Nenhum workshop cadastrado ainda</option>';
+        return;
+      }
+      fWorkshopSelect.innerHTML = '<option value="">Selecione</option>' + workshopsList.map(function(w){
+        return '<option value="' + w.id + '">' + esc(w.name) + ' — ' + esc(w.date.split('-').reverse().join('/')) + '</option>';
+      }).join('');
+      if (current && workshopsList.some(function(w){ return w.id === current; })){
+        fWorkshopSelect.value = current;
+      } else {
+        fWorkshopSelect.value = workshopsList[0].id;
+      }
+    });
+  }
+  loadWorkshops();
 
   function resetForm(keepWorkshop){
     document.getElementById('f-name').value = '';
     document.getElementById('f-area').value = '';
     if (!keepWorkshop){
-      document.getElementById('f-wsname').value = '';
-      document.getElementById('f-wsdate').value = todayISO();
+      fWorkshopSelect.value = '';
     }
     document.getElementById('f-manter').value = '';
     document.getElementById('f-mudar').value = '';
@@ -654,9 +689,8 @@
     var ok = true;
     var name = document.getElementById('f-name').value.trim();
     var area = document.getElementById('f-area').value;
-    var wsname = document.getElementById('f-wsname').value.trim();
-    var wsdate = document.getElementById('f-wsdate').value;
-    [['f-name',name],['f-area',area],['f-wsname',wsname],['f-wsdate',wsdate]].forEach(function(pair){
+    var workshopId = fWorkshopSelect.value;
+    [['f-name',name],['f-area',area],['f-workshop',workshopId]].forEach(function(pair){
       document.getElementById(pair[0]).style.borderColor = pair[1] ? '' : 'var(--crit-text)';
       if (!pair[1]) ok = false;
     });
@@ -738,12 +772,13 @@
         roleAnswers[q.key] = el ? el.value.trim() : '';
       }
     });
+    var selectedWorkshop = workshopsList.filter(function(w){ return w.id === fWorkshopSelect.value; })[0] || {};
     var payload = {
       respondentName: document.getElementById('f-name').value.trim(),
       area: area,
       roleAnswers: roleAnswers,
-      workshopName: document.getElementById('f-wsname').value.trim(),
-      workshopDate: document.getElementById('f-wsdate').value,
+      workshopName: selectedWorkshop.name || '',
+      workshopDate: selectedWorkshop.date || '',
       scores: {
         planejamento: scores.planejamento,
         abertura: scores.abertura,
@@ -779,7 +814,6 @@
 
   /* ---------------- history / dashboard (login-gated) ---------------- */
   var allResponses = [];
-  var wsNamesDatalist = document.getElementById('wsNames');
   var histSession = null;
 
   var histLogin = document.getElementById('histLogin');
@@ -813,6 +847,35 @@
       histLoginMsg.textContent = '';
       histLogin.hidden = true;
       loadHistory();
+    });
+  });
+
+  var admAddWsBtn = document.getElementById('admAddWsBtn');
+  var admAddWsMsg = document.getElementById('admAddWsMsg');
+  document.getElementById('adm-wsdate').value = todayISO();
+  admAddWsBtn.addEventListener('click', function(){
+    var name = document.getElementById('adm-wsname').value.trim();
+    var date = document.getElementById('adm-wsdate').value;
+    admAddWsMsg.className = 'form-msg';
+    if (!name || !date){
+      admAddWsMsg.textContent = 'Preencha nome e data.';
+      admAddWsMsg.classList.add('err');
+      return;
+    }
+    admAddWsBtn.disabled = true;
+    admAddWsMsg.textContent = 'Cadastrando...';
+    sb.from('workshops').insert([{ name: name, date: date }]).then(function(res){
+      admAddWsBtn.disabled = false;
+      if (res.error){
+        admAddWsMsg.textContent = 'Erro: ' + res.error.message;
+        admAddWsMsg.classList.add('err');
+        return;
+      }
+      admAddWsMsg.textContent = 'Workshop cadastrado!';
+      admAddWsMsg.classList.add('ok');
+      document.getElementById('adm-wsname').value = '';
+      document.getElementById('adm-wsdate').value = todayISO();
+      loadWorkshops();
     });
   });
 
@@ -1088,10 +1151,6 @@
     renderLineChart(groups);
     renderBarChart(groups);
     renderWsList(groups);
-
-    var names = {};
-    allResponses.forEach(function(r){ if (r.workshopName) names[r.workshopName] = true; });
-    wsNamesDatalist.innerHTML = Object.keys(names).map(function(n){ return '<option value="' + esc(n) + '">'; }).join('');
   }
 
   function loadHistory(){
