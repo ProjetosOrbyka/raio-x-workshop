@@ -206,8 +206,7 @@
   .obs-block.nota-geral .obs-title{ color:var(--ink); font-weight:700; }
   .note{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
   .note b{ color:var(--ink); font-weight:600; }
-  .two-col{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:14px; }
-  @media (max-width:760px){ .two-col{ grid-template-columns:1fr 1fr; } }
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; }
   @media (max-width:480px){ .two-col{ grid-template-columns:1fr; } }
   .col-title{ font-family:"Plus Jakarta Sans",sans-serif; font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
   .col-list{ display:flex; flex-direction:column; gap:8px; }
@@ -296,10 +295,11 @@
           <label for="f-area">Sua área <span class="req">*</span></label>
           <select id="f-area">
             <option value="">Selecione</option>
-            <option value="projetos">Projetos</option>
-            <option value="estrategia">Estratégia</option>
             <option value="comercial">Comercial</option>
+            <option value="estrategia">Estratégia</option>
             <option value="especialista">Especialista</option>
+            <option value="projetos">Projetos</option>
+            <option value="infra">Infra/Produto</option>
           </select>
         </div>
       </div>
@@ -313,34 +313,9 @@
 
     <div id="sectionsHost"></div>
 
-    <div class="card exam" id="roleExam" hidden>
-      <div class="exam-head">
-        <span class="exam-num mono">07</span>
-        <div>
-          <div class="exam-title" id="roleExamTitle">Específico da sua área</div>
-          <div class="exam-desc">Só quem está nessa área costuma ter essa informação.</div>
-        </div>
-      </div>
-      <div id="roleExamBody"></div>
-    </div>
-
-    <div class="card exam" id="notaGeralExam">
-      <div class="exam-head">
-        <span class="exam-num mono">08</span>
-        <div>
-          <div class="exam-title">Nota geral do workshop <span class="req">*</span></div>
-          <div class="exam-desc">Sensação geral, considerando tudo — do início ao fim.</div>
-        </div>
-      </div>
-      <div class="nps" data-key="notaGeral" id="nps-notaGeral"></div>
-      <div class="nps-readout" id="readout-notaGeral">Ainda não avaliado.</div>
-      <div class="field"><label for="obs-notaGeral">Observação (opcional)</label>
-        <textarea id="obs-notaGeral" placeholder="Comentário geral sobre o workshop como um todo..."></textarea></div>
-    </div>
-
     <div class="card exam">
       <div class="exam-head">
-        <span class="exam-num mono">09</span>
+        <span class="exam-num mono" id="manterNum">—</span>
         <div>
           <div class="exam-title">O que devemos manter</div>
           <div class="exam-desc">O que funcionou bem e deve continuar igual no próximo workshop.</div>
@@ -351,24 +326,13 @@
 
     <div class="card exam">
       <div class="exam-head">
-        <span class="exam-num mono">10</span>
+        <span class="exam-num mono" id="mudarNum">—</span>
         <div>
           <div class="exam-title">O que devemos mudar para o próximo</div>
           <div class="exam-desc">Ajustes concretos para a próxima edição.</div>
         </div>
       </div>
       <div class="field"><textarea id="f-mudar" placeholder="Ex.: reduzir o tempo da etapa X, revisar o material Y..."></textarea></div>
-    </div>
-
-    <div class="card exam">
-      <div class="exam-head">
-        <span class="exam-num mono">11</span>
-        <div>
-          <div class="exam-title">O que não vale a pena testar de novo</div>
-          <div class="exam-desc">Ideias que já foram tentadas e não funcionaram — pra não repetir o teste.</div>
-        </div>
-      </div>
-      <div class="field"><textarea id="f-naotestar" placeholder="Ex.: oferta relâmpago no 2º dia não converteu, não vale repetir..."></textarea></div>
     </div>
 
     <div class="submit-row">
@@ -427,14 +391,14 @@
       <div class="kpi-grid" id="kpiGrid"></div>
 
       <div class="card chart-card">
-        <div class="chart-title">Evolução da nota geral</div>
+        <div class="chart-title">Evolução da nota média geral</div>
         <div class="chart-wrap" id="lineChartWrap"></div>
       </div>
 
       <div class="card chart-card">
-        <div class="chart-title">Etapas do workshop mais recente vs. média histórica</div>
+        <div class="chart-title">Nota média por área — este workshop vs. média histórica</div>
         <div class="chart-legend">
-          <span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Workshop mais recente</span>
+          <span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Este workshop</span>
           <span class="legend-item"><span class="legend-swatch" style="background:var(--series-2)"></span>Média histórica</span>
         </div>
         <div class="chart-wrap" id="barChartWrap"></div>
@@ -456,34 +420,48 @@
   var SUPABASE_ANON_KEY = "sb_publishable_UlJddAAnKnNkY34Mp93_Hg_T4xDrwKt";
   var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  var SECTIONS = [
-    { key:'planejamento', num:'01', title:'Planejamento & Preparação', short:'Planejamento', desc:'Materiais, cronograma e comunicação prévia estavam prontos e claros?', ph:'Ex.: material chegou em cima da hora, cronograma mudou sem avisar o grupo...' },
-    { key:'aberturaLeads', num:'02', title:'Abertura — Energia dos leads', short:'Leads (abertura)', desc:'A abertura gerou energia nos leads e alinhou as expectativas deles sobre o workshop?', ph:'Ex.: leads participativos desde o início, perguntas já na abertura, clima de expectativa alta...' },
-    { key:'aberturaTime', num:'03', title:'Abertura — Energia do time', short:'Time (abertura)', desc:'A abertura gerou energia no time e alinhou as expectativas internas sobre a condução do workshop?', ph:'Ex.: time alinhado sobre os papéis antes de começar, clima bom nos bastidores, sem correria de última hora...' },
-    { key:'execucao', num:'04', title:'Execução & Estratégias aplicadas', short:'Execução', desc:'As dinâmicas e o conteúdo aplicados funcionaram na prática?', ph:'Ex.: a atividade em grupo não funcionou bem com turma grande...' },
-    { key:'participacao', num:'05', title:'Participação & resultado percebido', short:'Participação', desc:'O grupo participou de verdade e saiu com clareza dos próximos passos?', ph:'Ex.: grupo ficou disperso à tarde, poucas perguntas...' },
-    { key:'encerramento', num:'06', title:'Encerramento & fechamento', short:'Encerramento', desc:'O fechamento consolidou aprendizados e combinados?', ph:'Ex.: faltou tempo pra fechar os combinados no final...' }
-  ];
-  var AREA_LABEL = { projetos:'Projetos', estrategia:'Estratégia', comercial:'Comercial', especialista:'Especialista' };
+  var AREA_LABEL = { comercial:'Comercial', estrategia:'Estratégia', especialista:'Especialista', projetos:'Projetos', infra:'Infra/Produto' };
 
-  var ROLE_QUESTIONS = {
-    comercial: [
-      { key:'periodoVendas', type:'text', label:'Qual foi o maior período de vendas?', ph:'Ex.: pico nas 48h após a abertura do carrinho, no e-mail de última chamada...' }
+  var AREA_QUESTIONS = {
+    infra: [
+      { key:'materiaisCronograma', type:'rating', title:'Materiais, cronograma e comunicação prévia estavam prontos e claros?', ph:'Ex.: material chegou em cima da hora, cronograma mudou sem avisar o grupo...' },
+      { key:'ofertaDefinidaLiberada', type:'rating', title:'A oferta estava definida e foi liberada com 5 dias de antecedência?', ph:'Ex.: oferta fechou em cima da hora, faltou tempo de revisão...' },
+      { key:'configAreaMembros', type:'rating', title:'A configuração da área de membros e integrações ocorreu tudo bem?', ph:'Ex.: precisou configurar e testar durante o próprio workshop...' },
+      { key:'cronogramaAcordoPrazo', type:'rating', title:'O cronograma estava de acordo e foi liberado dentro do prazo?', ph:'Ex.: cronograma mudou de última hora...' },
+      { key:'disparosAgendadosOcorreram', type:'rating', title:'Os disparos foram agendados e ocorreram como o combinado?', ph:'Ex.: algum disparo atrasou ou saiu diferente do combinado...' },
+      { key:'impactoArea', type:'text', title:'Teve algo que você considera que gerou um grande impacto na área nesse workshop?', ph:'Descreva o que aconteceu e o impacto que teve...' }
     ],
-    projetos: [
-      { key:'quemCompareceu', type:'text', label:'No dia do evento, quem mais compareceu?', ph:'Ex.: maioria de convidados, poucos especialistas presentes...' }
+    comercial: [
+      { key:'materiaisCronograma', type:'rating', title:'Materiais, cronograma e comunicação prévia estavam prontos e claros?', ph:'...' },
+      { key:'cronogramaAcordoPrazo', type:'rating', title:'O cronograma estava de acordo e foi liberado dentro do prazo?', ph:'...' },
+      { key:'acoesComparecimento', type:'rating', title:'Quais foram as ações feitas para comparecimento?', ph:'Ex.: lembrete no WhatsApp, e-mail, ligação pros inscritos...' },
+      { key:'disparosComoCombinado', type:'rating', title:'Todos os disparos aconteceram como o combinado?', ph:'...' },
+      { key:'problemaApi', type:'rating', title:'Tivemos algum problema com API ou algo do tipo que impactou o trabalho?', ph:'...' },
+      { key:'aberturaCarrinhoDiferente', type:'rating', title:'Teve algo diferente feito para a abertura do carrinho?', ph:'...' }
     ],
     estrategia: [
-      { key:'acoesComparecimento', type:'text', label:'Quais ações de comparecimento foram feitas?', ph:'Ex.: lembrete no grupo do WhatsApp, e-mail 1h antes, ligação pros inscritos...' },
-      { key:'acoesResultado', type:'text', label:'Quais dessas ações deram mais resultado?', ph:'Ex.: o lembrete por WhatsApp trouxe mais gente que o e-mail...' },
-      { key:'videoPerformou', type:'text', label:'Qual vídeo performou mais?', ph:'Ex.: o vídeo de abertura teve mais retenção e comentários...' }
+      { key:'entregaCronogramaOferta', type:'rating', title:'Conseguiu entregar o cronograma e a oferta nos prazos solicitados?', ph:'...' },
+      { key:'captacaoImpacto', type:'rating', title:'Aconteceu algo durante a captação que é importante registrar, que impactou positiva ou negativamente o resultado?', ph:'...' },
+      { key:'especialistaSeguiuCombinado', type:'rating', title:'Seu especialista seguiu exatamente o que foi combinado ou teve algo que mudou durante o fim de semana?', ph:'...' },
+      { key:'ofertaEstrategiaRisca', type:'rating', title:'A oferta e a estratégia planejada foram seguidas à risca?', ph:'...' },
+      { key:'cronogramaSeguido', type:'rating', title:'O cronograma foi seguido?', ph:'...' },
+      { key:'dinamicasConteudoFuncionaram', type:'rating', title:'As dinâmicas e o conteúdo aplicados funcionaram na prática?', ph:'...' },
+      { key:'aberturaEnergiaTime', type:'rating', title:'A abertura gerou energia no time e alinhou as expectativas internas sobre a condução do workshop?', ph:'...' }
     ],
     especialista: [
-      { key:'entregaConteudoPitch', type:'rating', label:'Como você avalia sua entrega de conteúdo e do pitch?', desc:'Clareza, ritmo e conexão com a audiência na hora de apresentar.', ph:'Ex.: o pitch final ficou corrido, faltou tempo pra chamada de ação...' }
+      { key:'entregaConteudoPitch', type:'rating', title:'Como você avalia sua entrega durante o workshop, conteúdo e pitch?', ph:'Ex.: o pitch final ficou corrido, faltou tempo pra chamada de ação...' },
+      { key:'cronogramaRisca', type:'rating', title:'O cronograma foi seguido à risca?', ph:'...' },
+      { key:'preEDuranteRegistrar', type:'rating', title:'Teve algo que aconteceu pré e durante o WS que você acha importante registrar?', ph:'...' },
+      { key:'comoSeSentiu', type:'rating', title:'Como você estava se sentindo durante a sua entrega?', ph:'...' }
+    ],
+    projetos: [
+      { key:'tudoConformePlanejado', type:'rating', title:'Tudo aconteceu conforme o planejado, do início ao fim do workshop?', ph:'...' },
+      { key:'resolveuProblemaTempo', type:'rating', title:'Quando algo saiu do controle, a equipe conseguiu identificar e resolver o problema a tempo?', ph:'...' },
+      { key:'conducaoLeveOrganizada', type:'rating', title:'A condução do workshop se manteve leve e organizada, mesmo diante de imprevistos?', ph:'...' },
+      { key:'comunicacaoEntreAreas', type:'rating', title:'A comunicação entre as áreas (Comercial, Estratégia, Especialista, Infra) funcionou bem durante o workshop?', ph:'...' },
+      { key:'imprevistoRegistrar', type:'rating', title:'Teve algum imprevisto — bom ou ruim — que vale a pena registrar pra próxima vez?', ph:'...' }
     ]
   };
-  var roleScores = {};
-  var roleTexts = {};
 
   function band(score){
     if (score == null) return '';
@@ -498,26 +476,7 @@
 
   /* ---------------- form state ---------------- */
   var scores = {};
-  SECTIONS.forEach(function(s){ scores[s.key] = null; });
-  var notaGeral = null;
-
   var sectionsHost = document.getElementById('sectionsHost');
-  SECTIONS.forEach(function(s){
-    var card = document.createElement('div');
-    card.className = 'card exam';
-    card.id = 'exam-' + s.key;
-    card.innerHTML =
-      '<div class="exam-head">' +
-        '<span class="exam-num mono">' + s.num + '</span>' +
-        '<div><div class="exam-title">' + s.title + ' <span class="req">*</span></div>' +
-          '<div class="exam-desc">' + s.desc + '</div></div>' +
-      '</div>' +
-      '<div class="nps" data-key="' + s.key + '" id="nps-' + s.key + '"></div>' +
-      '<div class="nps-readout" id="readout-' + s.key + '">Ainda não avaliado.</div>' +
-      '<div class="field"><label for="obs-' + s.key + '">Observação (opcional)</label>' +
-        '<textarea id="obs-' + s.key + '" placeholder="' + esc(s.ph) + '"></textarea></div>';
-    sectionsHost.appendChild(card);
-  });
 
   function buildNps(containerId, key, onPick){
     var el = document.getElementById(containerId);
@@ -550,64 +509,48 @@
     el.innerHTML = 'Nota ' + value + '/10 · <span class="band-chip band-' + b + '">' + bandIcon(b) + ' ' + bandLabel(b) + '</span>';
   }
 
-  SECTIONS.forEach(function(s){
-    buildNps('nps-' + s.key, s.key, function(v){
-      scores[s.key] = v;
-      paintNps('nps-' + s.key, v);
-      paintReadout('readout-' + s.key, v);
-      document.getElementById('exam-' + s.key).classList.remove('has-error');
-    });
-  });
-  buildNps('nps-notaGeral', 'notaGeral', function(v){
-    notaGeral = v;
-    paintNps('nps-notaGeral', v);
-    paintReadout('readout-notaGeral', v);
-    document.getElementById('notaGeralExam').classList.remove('has-error');
-  });
+  function updateTailNumbers(n){
+    document.getElementById('manterNum').textContent = n ? String(n+1).padStart(2,'0') : '—';
+    document.getElementById('mudarNum').textContent = n ? String(n+2).padStart(2,'0') : '—';
+  }
 
-  /* ---------------- role-specific section ---------------- */
-  var roleExam = document.getElementById('roleExam');
-  var roleExamTitle = document.getElementById('roleExamTitle');
-  var roleExamBody = document.getElementById('roleExamBody');
-
-  function renderRoleSection(area){
-    roleScores = {};
-    roleTexts = {};
-    var qs = ROLE_QUESTIONS[area] || [];
-    if (!qs.length){ roleExam.hidden = true; roleExamBody.innerHTML = ''; return; }
-    roleExam.hidden = false;
-    roleExam.classList.remove('has-error');
-    roleExamTitle.textContent = 'Específico da área: ' + (AREA_LABEL[area] || area);
-    roleExamBody.innerHTML = qs.map(function(q){
+  function renderAreaQuestions(area){
+    scores = {};
+    var qs = AREA_QUESTIONS[area] || [];
+    if (!qs.length){ sectionsHost.innerHTML = ''; updateTailNumbers(0); return; }
+    sectionsHost.innerHTML = qs.map(function(q, i){
+      var num = String(i+1).padStart(2,'0');
       if (q.type === 'rating'){
-        roleScores[q.key] = null;
-        return '<div class="role-q" id="roleq-' + q.key + '">' +
-          '<label style="display:block;font-size:13.5px;font-weight:600;margin-bottom:2px;">' + esc(q.label) + ' <span class="req">*</span></label>' +
-          (q.desc ? '<div class="exam-desc" style="margin-bottom:8px;">' + esc(q.desc) + '</div>' : '') +
-          '<div class="nps" id="nps-role-' + q.key + '"></div>' +
-          '<div class="nps-readout" id="readout-role-' + q.key + '">Ainda não avaliado.</div>' +
-          '<div class="field"><textarea id="obs-role-' + q.key + '" placeholder="' + esc(q.ph) + '"></textarea></div>' +
+        scores[q.key] = null;
+        return '<div class="card exam" id="exam-' + q.key + '">' +
+          '<div class="exam-head"><span class="exam-num mono">' + num + '</span>' +
+          '<div><div class="exam-title">' + esc(q.title) + ' <span class="req">*</span></div></div></div>' +
+          '<div class="nps" id="nps-' + q.key + '"></div>' +
+          '<div class="nps-readout" id="readout-' + q.key + '">Ainda não avaliado.</div>' +
+          '<div class="field"><label for="obs-' + q.key + '">Observação (opcional)</label>' +
+          '<textarea id="obs-' + q.key + '" placeholder="' + esc(q.ph||'') + '"></textarea></div>' +
           '</div>';
       }
-      roleTexts[q.key] = '';
-      return '<div class="field" style="margin-top:16px;">' +
-        '<label for="roletext-' + q.key + '">' + esc(q.label) + '</label>' +
-        '<textarea id="roletext-' + q.key + '" placeholder="' + esc(q.ph) + '"></textarea>' +
+      return '<div class="card exam" id="exam-' + q.key + '">' +
+        '<div class="exam-head"><span class="exam-num mono">' + num + '</span>' +
+        '<div><div class="exam-title">' + esc(q.title) + '</div></div></div>' +
+        '<div class="field"><textarea id="obs-' + q.key + '" placeholder="' + esc(q.ph||'') + '"></textarea></div>' +
         '</div>';
     }).join('');
     qs.forEach(function(q){
       if (q.type !== 'rating') return;
-      buildNps('nps-role-' + q.key, q.key, function(v){
-        roleScores[q.key] = v;
-        paintNps('nps-role-' + q.key, v);
-        paintReadout('readout-role-' + q.key, v);
-        document.getElementById('roleq-' + q.key).classList.remove('has-error');
+      buildNps('nps-' + q.key, q.key, function(v){
+        scores[q.key] = v;
+        paintNps('nps-' + q.key, v);
+        paintReadout('readout-' + q.key, v);
+        document.getElementById('exam-' + q.key).classList.remove('has-error');
       });
     });
+    updateTailNumbers(qs.length);
   }
 
   document.getElementById('f-area').addEventListener('change', function(){
-    renderRoleSection(this.value);
+    renderAreaQuestions(this.value);
   });
 
   /* ---------------- tabs ---------------- */
@@ -670,20 +613,7 @@
     }
     document.getElementById('f-manter').value = '';
     document.getElementById('f-mudar').value = '';
-    document.getElementById('f-naotestar').value = '';
-    renderRoleSection('');
-    SECTIONS.forEach(function(s){
-      scores[s.key] = null;
-      paintNps('nps-' + s.key, null);
-      paintReadout('readout-' + s.key, null);
-      document.getElementById('exam-' + s.key).classList.remove('has-error');
-      document.getElementById('obs-' + s.key).value = '';
-    });
-    notaGeral = null;
-    paintNps('nps-notaGeral', null);
-    paintReadout('readout-notaGeral', null);
-    document.getElementById('notaGeralExam').classList.remove('has-error');
-    document.getElementById('obs-notaGeral').value = '';
+    renderAreaQuestions('');
   }
 
   function validate(){
@@ -695,19 +625,11 @@
       document.getElementById(pair[0]).style.borderColor = pair[1] ? '' : 'var(--crit-text)';
       if (!pair[1]) ok = false;
     });
-    SECTIONS.forEach(function(s){
-      var missing = scores[s.key] == null;
-      document.getElementById('exam-' + s.key).classList.toggle('has-error', missing);
-      if (missing) ok = false;
-    });
-    document.getElementById('notaGeralExam').classList.toggle('has-error', notaGeral == null);
-    if (notaGeral == null) ok = false;
-
-    var qs = ROLE_QUESTIONS[area] || [];
+    var qs = AREA_QUESTIONS[area] || [];
     qs.forEach(function(q){
       if (q.type !== 'rating') return;
-      var missing = roleScores[q.key] == null;
-      var el = document.getElementById('roleq-' + q.key);
+      var missing = scores[q.key] == null;
+      var el = document.getElementById('exam-' + q.key);
       if (el) el.classList.toggle('has-error', missing);
       if (missing) ok = false;
     });
@@ -722,12 +644,8 @@
       workshop_date: payload.workshopDate,
       scores: payload.scores,
       comments: payload.comments,
-      nota_geral: payload.notaGeral,
-      nota_geral_comment: payload.notaGeralComment,
-      role_answers: payload.roleAnswers,
       manter: payload.manter,
-      mudar: payload.mudar,
-      nao_testar: payload.naoTestar
+      mudar: payload.mudar
     };
   }
 
@@ -739,12 +657,8 @@
       workshopDate: row.workshop_date,
       scores: row.scores || {},
       comments: row.comments || {},
-      notaGeral: row.nota_geral,
-      notaGeralComment: row.nota_geral_comment,
-      roleAnswers: row.role_answers || {},
       manter: row.manter,
       mudar: row.mudar,
-      naoTestar: row.nao_testar,
       createdAt: row.created_at
     };
   }
@@ -760,39 +674,22 @@
     submitBtn.disabled = true;
     formMsg.textContent = 'Enviando...';
     var area = document.getElementById('f-area').value;
-    var roleAnswers = {};
-    (ROLE_QUESTIONS[area] || []).forEach(function(q){
-      if (q.type === 'rating'){
-        roleAnswers[q.key] = {
-          score: roleScores[q.key],
-          comment: (document.getElementById('obs-role-' + q.key) || {}).value
-        };
-        if (roleAnswers[q.key].comment) roleAnswers[q.key].comment = roleAnswers[q.key].comment.trim();
-      } else {
-        var el = document.getElementById('roletext-' + q.key);
-        roleAnswers[q.key] = el ? el.value.trim() : '';
-      }
-    });
     var selectedWorkshop = workshopsList.filter(function(w){ return w.id === fWorkshopSelect.value; })[0] || {};
     var scoresPayload = {};
     var commentsPayload = {};
-    SECTIONS.forEach(function(s){
-      scoresPayload[s.key] = scores[s.key];
-      commentsPayload[s.key] = document.getElementById('obs-' + s.key).value.trim();
+    (AREA_QUESTIONS[area] || []).forEach(function(q){
+      if (q.type === 'rating') scoresPayload[q.key] = scores[q.key];
+      commentsPayload[q.key] = document.getElementById('obs-' + q.key).value.trim();
     });
     var payload = {
       respondentName: document.getElementById('f-name').value.trim(),
       area: area,
-      roleAnswers: roleAnswers,
       workshopName: selectedWorkshop.name || '',
       workshopDate: selectedWorkshop.date || '',
       scores: scoresPayload,
       comments: commentsPayload,
-      notaGeral: notaGeral,
-      notaGeralComment: document.getElementById('obs-notaGeral').value.trim(),
       manter: document.getElementById('f-manter').value.trim(),
-      mudar: document.getElementById('f-mudar').value.trim(),
-      naoTestar: document.getElementById('f-naotestar').value.trim()
+      mudar: document.getElementById('f-mudar').value.trim()
     };
     sb.from('responses').insert([toRow(payload)]).then(function(res){
       submitBtn.disabled = false;
@@ -905,15 +802,24 @@
     });
     var groups = order.map(function(k){ return map[k]; });
     groups.forEach(function(g){
-      var sums = {}; SECTIONS.forEach(function(s){ sums[s.key] = 0; });
-      var notaSum = 0;
+      var byArea = {};
       g.responses.forEach(function(r){
-        SECTIONS.forEach(function(s){ sums[s.key] += (r.scores && r.scores[s.key]) || 0; });
-        notaSum += r.notaGeral || 0;
+        if (!byArea[r.area]) byArea[r.area] = { sum:0, count:0 };
+        var qs = AREA_QUESTIONS[r.area] || [];
+        qs.forEach(function(q){
+          if (q.type !== 'rating') return;
+          var v = r.scores && r.scores[q.key];
+          if (v != null){ byArea[r.area].sum += v; byArea[r.area].count += 1; }
+        });
       });
-      var n = g.responses.length || 1;
-      g.avgScores = {}; SECTIONS.forEach(function(s){ g.avgScores[s.key] = sums[s.key] / n; });
-      g.avgNota = notaSum / n;
+      g.areaAvg = {};
+      var allSum = 0, allCount = 0;
+      Object.keys(byArea).forEach(function(a){
+        g.areaAvg[a] = byArea[a].count ? byArea[a].sum / byArea[a].count : null;
+        allSum += byArea[a].sum;
+        allCount += byArea[a].count;
+      });
+      g.avgNota = allCount ? allSum / allCount : 0;
     });
     groups.sort(function(a,b){ return (a.date||'').localeCompare(b.date||''); });
     return groups;
@@ -932,18 +838,20 @@
     } else {
       deltaHtml = '<span class="kpi-sub" style="color:var(--muted)">primeiro registro</span>';
     }
-    var weakestKey = SECTIONS.reduce(function(acc,s){
-      return (acc==null || latest.avgScores[s.key] < latest.avgScores[acc]) ? s.key : acc;
-    }, null);
-    var weakestSection = SECTIONS.filter(function(s){ return s.key === weakestKey; })[0];
-    var weakestScore = latest.avgScores[weakestKey];
+    var weakestArea = null;
+    Object.keys(latest.areaAvg).forEach(function(a){
+      if (latest.areaAvg[a] == null) return;
+      if (weakestArea == null || latest.areaAvg[a] < latest.areaAvg[weakestArea]) weakestArea = a;
+    });
+    var weakestScore = weakestArea != null ? latest.areaAvg[weakestArea] : null;
     var wBand = band(weakestScore);
+    var weakestLabel = weakestArea ? (AREA_LABEL[weakestArea] || weakestArea) : '—';
 
     grid.innerHTML =
       '<div class="card kpi"><div class="kpi-label">Workshops avaliados</div><div class="kpi-value">' + groups.length + '</div></div>' +
-      '<div class="card kpi"><div class="kpi-label">Nota geral · mais recente</div><div class="kpi-value">' + fmt1(latest.avgNota) + '</div><div class="kpi-sub">' + deltaHtml + '</div></div>' +
+      '<div class="card kpi"><div class="kpi-label">Nota média · mais recente</div><div class="kpi-value">' + fmt1(latest.avgNota) + '</div><div class="kpi-sub">' + deltaHtml + '</div></div>' +
       '<div class="card kpi"><div class="kpi-label">Respostas registradas</div><div class="kpi-value">' + totalResponses + '</div></div>' +
-      '<div class="card kpi"><div class="kpi-label">Ponto de atenção</div><div class="kpi-value" style="font-size:19px;line-height:1.2;">' + weakestSection.short + '</div><div class="kpi-sub"><span class="badge band-' + wBand + '">' + bandIcon(wBand) + ' ' + fmt1(weakestScore) + '</span></div></div>';
+      '<div class="card kpi"><div class="kpi-label">Área com nota mais baixa</div><div class="kpi-value" style="font-size:19px;line-height:1.2;">' + esc(weakestLabel) + '</div><div class="kpi-sub">' + (weakestScore!=null ? '<span class="badge band-' + wBand + '">' + bandIcon(wBand) + ' ' + fmt1(weakestScore) + '</span>' : '—') + '</div></div>';
   }
 
   function renderLineChart(groups){
@@ -1004,16 +912,17 @@
   function renderBarChart(groups){
     var wrap = document.getElementById('barChartWrap');
     var latest = groups[groups.length - 1];
+    var areaKeys = Object.keys(AREA_LABEL);
     var histAvg = {};
-    SECTIONS.forEach(function(s){
-      var sum = 0;
-      groups.forEach(function(g){ sum += g.avgScores[s.key]; });
-      histAvg[s.key] = sum / groups.length;
+    areaKeys.forEach(function(a){
+      var sum = 0, count = 0;
+      groups.forEach(function(g){ if (g.areaAvg[a] != null){ sum += g.areaAvg[a]; count++; } });
+      histAvg[a] = count ? sum / count : null;
     });
 
-    var W = 640, H = 240, padL = 28, padR = 10, padT = 14, padB = 46;
+    var W = 640, H = 240, padL = 28, padR = 10, padT = 14, padB = 32;
     var innerW = W - padL - padR, innerH = H - padT - padB;
-    var groupW = innerW / SECTIONS.length;
+    var groupW = innerW / areaKeys.length;
     var barW = Math.min(26, groupW * 0.28);
     var y = function(v){ return padT + innerH - (innerH * v) / 10; };
 
@@ -1023,18 +932,21 @@
     }).join('');
 
     var bars = '';
-    SECTIONS.forEach(function(s, i){
+    areaKeys.forEach(function(a, i){
       var cx = padL + groupW * i + groupW/2;
-      var v1 = latest.avgScores[s.key], v2 = histAvg[s.key];
+      var v1 = latest.areaAvg[a], v2 = histAvg[a];
       var x1 = cx - barW - 2, x2 = cx + 2;
-      bars += '<rect class="bar-s1 hit" data-label="' + esc(s.title) + '" data-v="' + fmt1(v1) + '" data-which="Workshop mais recente" x="' + x1 + '" y="' + y(v1) + '" width="' + barW + '" height="' + (innerH - (y(v1)-padT)) + '" rx="3"/>';
-      bars += '<rect class="bar-s2 hit" data-label="' + esc(s.title) + '" data-v="' + fmt1(v2) + '" data-which="Média histórica" x="' + x2 + '" y="' + y(v2) + '" width="' + barW + '" height="' + (innerH - (y(v2)-padT)) + '" rx="3"/>';
-      var short = s.short;
-      bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-30) + '" text-anchor="middle">' + esc(s.num) + '</text>';
-      bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-14) + '" text-anchor="middle">' + esc(short) + '</text>';
+      var label = AREA_LABEL[a];
+      if (v1 != null){
+        bars += '<rect class="bar-s1 hit" data-label="' + esc(label) + '" data-v="' + fmt1(v1) + '" data-which="Este workshop" x="' + x1 + '" y="' + y(v1) + '" width="' + barW + '" height="' + (innerH - (y(v1)-padT)) + '" rx="3"/>';
+      }
+      if (v2 != null){
+        bars += '<rect class="bar-s2 hit" data-label="' + esc(label) + '" data-v="' + fmt1(v2) + '" data-which="Média histórica" x="' + x2 + '" y="' + y(v2) + '" width="' + barW + '" height="' + (innerH - (y(v2)-padT)) + '" rx="3"/>';
+      }
+      bars += '<text class="caxis-text" x="' + cx + '" y="' + (H-14) + '" text-anchor="middle">' + esc(label) + '</text>';
     });
 
-    wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Comparação por etapa">' + gridLines + bars + '</svg><div class="tooltip" id="barTooltip"></div>';
+    wrap.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Nota média por área">' + gridLines + bars + '</svg><div class="tooltip" id="barTooltip"></div>';
 
     var svg = wrap.querySelector('svg');
     var tip = document.getElementById('barTooltip');
@@ -1058,54 +970,33 @@
     host.innerHTML = sorted.map(function(g){
       var b = band(g.avgNota);
       var respRows = g.responses.map(function(r){
-        var obsBlocks = SECTIONS.map(function(s){
-          var score = r.scores && r.scores[s.key];
-          var comment = r.comments && r.comments[s.key];
-          var b2 = band(score);
+        var qs = AREA_QUESTIONS[r.area] || [];
+        var obsBlocks = qs.map(function(q, i){
+          var num = String(i+1).padStart(2,'0');
+          var comment = r.comments && r.comments[q.key];
+          if (q.type === 'rating'){
+            var score = r.scores && r.scores[q.key];
+            var b2 = band(score);
+            return '<div class="obs-block">' +
+              '<div class="obs-head"><span class="obs-num mono">' + num + '</span>' +
+              '<span class="obs-title">' + esc(q.title) + '</span>' +
+              '<span class="badge band-' + b2 + '">' + bandIcon(b2) + ' ' + (score != null ? score : '—') + '</span></div>' +
+              (comment ? '<div class="obs-text">“' + esc(comment) + '”</div>' : '') +
+              '</div>';
+          }
           return '<div class="obs-block">' +
-            '<div class="obs-head"><span class="obs-num mono">' + s.num + '</span>' +
-            '<span class="obs-title">' + esc(s.title) + '</span>' +
-            '<span class="badge band-' + b2 + '">' + bandIcon(b2) + ' ' + (score != null ? score : '—') + '</span></div>' +
+            '<div class="obs-head"><span class="obs-num mono">' + num + '</span>' +
+            '<span class="obs-title">' + esc(q.title) + '</span></div>' +
             (comment ? '<div class="obs-text">“' + esc(comment) + '”</div>' : '') +
             '</div>';
         }).join('');
-        var roleBlock = '';
-        var roleQs = ROLE_QUESTIONS[r.area] || [];
-        if (roleQs.length && r.roleAnswers){
-          roleBlock = roleQs.map(function(q){
-            var ans = r.roleAnswers[q.key];
-            if (q.type === 'rating'){
-              if (!ans || ans.score == null) return '';
-              var b3 = band(ans.score);
-              return '<div class="obs-block">' +
-                '<div class="obs-head"><span class="obs-num mono">07</span>' +
-                '<span class="obs-title">' + esc(q.label) + '</span>' +
-                '<span class="badge band-' + b3 + '">' + bandIcon(b3) + ' ' + ans.score + '</span></div>' +
-                (ans.comment ? '<div class="obs-text">“' + esc(ans.comment) + '”</div>' : '') +
-                '</div>';
-            }
-            if (!ans) return '';
-            return '<div class="obs-block">' +
-              '<div class="obs-head"><span class="obs-num mono">07</span>' +
-              '<span class="obs-title">' + esc(q.label) + '</span></div>' +
-              '<div class="obs-text">“' + esc(ans) + '”</div>' +
-              '</div>';
-          }).join('');
-        }
-        var notaBlock = '<div class="obs-block nota-geral">' +
-          '<div class="obs-head"><span class="obs-num mono">08</span>' +
-          '<span class="obs-title">Nota geral</span>' +
-          '<span class="badge band-' + band(r.notaGeral) + '">' + bandIcon(band(r.notaGeral)) + ' ' + r.notaGeral + '</span></div>' +
-          (r.notaGeralComment ? '<div class="obs-text">“' + esc(r.notaGeralComment) + '”</div>' : '') +
-          '</div>';
         var notes = '';
         if (r.manter) notes += '<div class="note"><b>Manter:</b> ' + esc(r.manter) + '</div>';
         if (r.mudar) notes += '<div class="note"><b>Mudar:</b> ' + esc(r.mudar) + '</div>';
-        if (r.naoTestar) notes += '<div class="note"><b>Não testar de novo:</b> ' + esc(r.naoTestar) + '</div>';
         return '<div class="resp-row">' +
           '<div class="resp-head"><span class="resp-name">' + esc(r.respondentName) + '</span>' +
           '<span class="area-tag">' + esc(AREA_LABEL[r.area] || r.area) + '</span></div>' +
-          obsBlocks + roleBlock + notaBlock + notes +
+          obsBlocks + notes +
           '</div>';
       }).join('');
 
@@ -1127,7 +1018,6 @@
           '<div class="two-col">' +
             '<div><div class="col-title">O que manter</div><div class="col-list">' + listCol('manter') + '</div></div>' +
             '<div><div class="col-title">O que mudar</div><div class="col-list">' + listCol('mudar') + '</div></div>' +
-            '<div><div class="col-title">Não vale testar de novo</div><div class="col-list">' + listCol('naoTestar') + '</div></div>' +
           '</div>' +
         '</div></details>';
     }).join('');
